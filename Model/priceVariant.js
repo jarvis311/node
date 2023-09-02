@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 var PriceVariant_schema = new mongoose.Schema({
     id: Number,
-    vehicle_information_id: Number,
+    vehicle_information_id: mongoose.Schema.Types.ObjectId,
     name: String,
     link: {
         type: String,

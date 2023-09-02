@@ -1,13 +1,12 @@
 import mongoose from "mongoose";
 
-var VariantSpecificationSchema = new mongoose.Schema({
+const VariantSpecificationSchema = new mongoose.Schema({
     id: {
         type: Number,
-        default: 0
+        default: 1
     },
     name: String
 })
-
 var VariantSpecification = mongoose.model('VariantSpecification', VariantSpecificationSchema)
 
 export default VariantSpecification

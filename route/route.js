@@ -26,6 +26,7 @@ router.post("/deleteMany", async (req, res) => {
         try {
             await mongoose.connection.db.dropCollection(collectionName);
             console.log(`Collection '${collectionName}' deleted.`);
+            res.send("Ok, Table is deleted !!!")
         } catch (error) {
             console.error(`Error deleting collection '${collectionName}': ${error.message}`);
         }
