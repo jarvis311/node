@@ -1,21 +1,23 @@
 
 import con from "../connecttion/mysqlconn.js"
 import '../connecttion/conn.js'
-import Cataroies from "../Model/categories.js"
 import bodytypes from "../Model/BodyType.js"
 import vehicle_model_color from "../Model/VehicleModelColor.js"
+import Cataroies from "../Model/categories.js"
 import Brands from "../Model/Brands.js"
 import VariantSpecification from "../Model/VariantSpecification.js"
 import vehicle_information from "../Model/VehicleInformation.js"
 import VariantKey from "../Model/VariantKeySpec.js"
 import PriceVariant from "../Model/priceVariant.js"
-
+import keyspecificationModel from "../Model/keyspecification.js"
 
 const categories = async (req, res) => {
     try {
-        con.query("SELECT * FROM `categories`", (err, result, fileds) => {
-            if (err) throw err
-            result.map(async (val) => {
+        const result = await con.query("SELECT * FROM `categories`")
+        const data = result[0]
+        for (const val of data) {
+            const ifExistDoc = await Cataroies.findOne({ category_name: val.category_name })
+            if (!ifExistDoc) {
                 const data = Cataroies({
                     id: val.id,
                     category_name: val.category_name,
@@ -23,20 +25,22 @@ const categories = async (req, res) => {
                     thumb_image: val.thumb_image,
                 })
                 var dd = await data.save()
-            })
-            res.send(result)
-        })
+            }
+        }
+        res.send("Categories Added!!!")
     } catch (err) {
         console.log(err);
     }
-
 }
 
 const brands = async (req, res) => {
     try {
-        con.query("SELECT * FROM `brands` WHERE `deleted_at` IS NULL", (err, result, fileds) => {
-            if (err) throw err
-            result.map(async (val) => {
+        const result = await con.query("SELECT * FROM `brands` WHERE `deleted_at` IS NULL")
+        const data = result[0]
+
+        for (const val of data) {
+            const ifExistDoc = await Brands.findOne({ name: val.name })
+            if (!ifExistDoc) {
                 const data = Brands({
                     id: val.id,
                     category_id: val.category_id,
@@ -50,9 +54,10 @@ const brands = async (req, res) => {
                     updatedAt: val.updated_at,
                 })
                 var dd = await data.save()
-            })
-            res.send(result)
-        })
+            }
+
+        }
+        res.send("Brand Insreted!!!!")
     } catch (err) {
         console.log(err);
     }
@@ -61,9 +66,12 @@ const brands = async (req, res) => {
 
 const bodytype = async (req, res) => {
     try {
-        con.query("SELECT * FROM `bodytypes` WHERE `deleted_at` IS NULL", (err, result, fileds) => {
-            if (err) throw err
-            result.map(async (val) => {
+        const result = await con.query("SELECT * FROM `bodytypes` WHERE `deleted_at` IS NULL")
+        const data = result[0]
+
+        for (const val of data) {
+            const ifExistDoc = await bodytypes.findOne({ name: val.name })
+            if (!ifExistDoc) {
                 const data = bodytypes({
                     id: val.id,
                     category_id: val.category_id,
@@ -75,9 +83,35 @@ const bodytype = async (req, res) => {
                     updatedAt: val.updated_at,
                 })
                 var dd = await data.save()
-            })
-            res.send(result)
-        })
+            }
+        }
+        res.send("Body type inserted!!!")
+    } catch (err) {
+        console.log(err);
+    }
+
+}
+const keyspecification = async (req, res) => {
+    try {
+        const result = await con.query("SELECT * FROM `keyspecification` WHERE `deleted_at` IS NULL")
+        const data = result[0]
+
+        for (const val of data) {
+            const ifExistDoc = await keyspecificationModel.findOne({ name: val.name })
+            if (!ifExistDoc) {
+                const data = keyspecificationModel({
+                    id: val.id,
+                    name: val.name,
+                    icon: val.icon,
+                    deleted_by: val.deleted_by,
+                    deleted_at: val.deleted_at,
+                    createdAt: val.created_at,
+                    updatedAt: val.updated_at,
+                })
+                var dd = await data.save()
+            }
+        }
+        res.send("Keyspecification inserted!!!")
     } catch (err) {
         console.log(err);
     }
@@ -259,4 +293,4 @@ const price_variants = async (req, res) => {
         console.log(error);
     }
 }
-export default { categories, brands, bodytype, vehicalcolor, variant_specifications, vehicle_informations, variant_key_specs, price_variants }
+export default { categories, brands, bodytype, vehicalcolor, variant_specifications, vehicle_informations, variant_key_specs, price_variants, keyspecification }

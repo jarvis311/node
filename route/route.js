@@ -19,6 +19,7 @@ router.post("/variant_specifications", MysqltoMongodb.variant_specifications)
 router.post("/vehicle_information", MysqltoMongodb.vehicle_informations)
 router.post("/variant_key_specs", MysqltoMongodb.variant_key_specs)
 router.post("/price_variants", MysqltoMongodb.price_variants)
+router.post("/keyspecification", MysqltoMongodb.keyspecification)
 
 router.post("/deleteMany", async (req, res) => {
     const collectionsToDelete = ['variantkeys', 'variantspecifications', 'vehicle_informations', 'vehicle_model_colors', 'pricevariants'];
