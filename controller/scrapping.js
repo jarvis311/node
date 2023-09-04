@@ -9,16 +9,18 @@ import PriceVariant from "../Model/priceVariant.js";
 import VariantSpecification from "../Model/VariantSpecification.js";
 import VariantKey from "../Model/VariantKeySpec.js";
 import vehicle_model_color from "../Model/VehicleModelColor.js";
+import CategoryModel from "../Model/categories.js"
+import dd from "dump-die";
 
-var category_id;
 var link;
 
 const scrap_bike = async (input, brand) => {
     try {
-        category_id = input.category
+
+        // category_id = input.category
         link = input.link
-        let brand_id = brand._id
-        let brand_php_id = brand.id
+        var brand = brand
+        var brand_id = brand.id
         if (input.scrap_type == "brand") {
             var new_bike_url = "https://www.bikedekho.com/" + brand.name + "-bikes"
         } else {
@@ -27,10 +29,16 @@ const scrap_bike = async (input, brand) => {
         }
         let data_res_arr = await scrap_common_model(new_bike_url)
 
-
+        if ('upcomingCars' in data_res_arr) {
+            data_res_arr.upcomingCars.items.map(item => {
+                data_res_arr.items.push(item)
+            })
+        }
+        // dd("sdhasfjkl>>>", data_res_arr.items)
         if ('items' in data_res_arr) {
+
             for (const val of data_res_arr.items) {
-                brand_id = brand._id
+                brand_id = brand.id
                 const model_name = val.modelName ? val.modelName : "NA"
                 const fuel_type = val.fuelType ? val.fuelType : "NA"
                 let avg_rating = 0
@@ -100,7 +108,7 @@ const scrap_bike = async (input, brand) => {
                         on_road_price = val.minOnRoadPrice
                     }
                 }
-                var client = await axios.get("https://www.bikedekho.com" + val.otherLinks.url,{timeout:6000})
+                var client = await axios.get("https://www.bikedekho.com" + val.otherLinks.url)
                 var html = cheerio.load(client.data).html()
                 var response = html.split('</script>');
                 var data_respone = get_string_between(response[11], '<script>window.__INITIAL_STATE__ = ', " window.__isWebp =  false;")
@@ -116,77 +124,80 @@ const scrap_bike = async (input, brand) => {
                 if (res_arr.priceDetailSection) {
                     var price_details = res_arr.priceDetailSection[0].variantDetailByFuel[""]
 
-                    price_details.map((val2) => {
-                        if (variant_name == val2.name) {
-                            rto_price = val2.rto ? val2.rto : 0
-                            insurance_price = val2.insurance ? val2.insurance : 0
-                            other_price = val2.others.total ? val2.others.total : 0
-                        }
-                    })
-                } else {
-                    if (showroom_price < 25000) {
-                        rtoPrice = ((showroom_price * 2) / 100)
+                        price_details.map((val2) => {
+                            if (variant_name == val2.name) {
+                                rto_price = val2.rto ? val2.rto : 0
+                                insurance_price = val2.insurance ? val2.insurance : 0
+                                other_price = val2.others.total ? val2.others.total : 0
+                            }
+                        })
                     } else {
-                        if (showroom_price > 25000 && showroom_price < 45000) {
-                            rtoPrice = ((showroom_price * 4) / 100)
+                        if (showroom_price < 25000) {
+                            rtoPrice = ((showroom_price * 2) / 100)
                         } else {
-                            if (showroom_price > 45000 && showroom_price < 60000) {
-                                rtoPrice = ((showroom_price * 6) / 100)
+                            if (showroom_price > 25000 && showroom_price < 45000) {
+                                rtoPrice = ((showroom_price * 4) / 100)
                             } else {
-                                if (showroom_price > 60000) {
-                                    rtoPrice = ((showroom_price * 8) / 100)
+                                if (showroom_price > 45000 && showroom_price < 60000) {
+                                    rtoPrice = ((showroom_price * 6) / 100)
+                                } else {
+                                    if (showroom_price > 60000) {
+                                        rtoPrice = ((showroom_price * 8) / 100)
+                                    }
                                 }
                             }
                         }
-                    }
-                    if (engine < 75) {
-                        insurancePrice = 482
-                    } else {
-                        if (engine > 75 && engine < 150) {
-                            insurancePrice = 752
+                        if (engine < 75) {
+                            insurancePrice = 482
                         } else {
-                            if (engine > 150 && engine < 350) {
-                                insurancePrice = 1193
+                            if (engine > 75 && engine < 150) {
+                                insurancePrice = 752
                             } else {
-                                insurancePrice = 2323
+                                if (engine > 150 && engine < 350) {
+                                    insurancePrice = 1193
+                                } else {
+                                    insurancePrice = 2323
+                                }
                             }
                         }
-                    }
-                    insurancePrice = insurancePrice * 5
-                    var totalPriceWithRto = showroom_price + rtoPrice
-                    var finalInsuranceData = insurancePrice + ((insurancePrice * 18) / 100)
-                    if (totalPriceWithRto < on_road_price) {
-                        rtoPrice = Math.round(rtoPrice)
-                        rto_price = rtoPrice
-                    } else {
-                        rto_price = 0
-                    }
-                    var totalPriceWithRtoInsurance = (showroom_price + rtoPrice + finalInsuranceData)
-                    if (totalPriceWithRtoInsurance < on_road_price) {
-                        var otherPrice = on_road_price - totalPriceWithRtoInsurance
-                        if (otherPrice > 500) {
-                            otherPrice = Math.round(otherPrice)
-                            other_price = otherPrice
-                            var insPrice = 0
+                        insurancePrice = insurancePrice * 5
+                        var totalPriceWithRto = showroom_price + rtoPrice
+                        var finalInsuranceData = insurancePrice + ((insurancePrice * 18) / 100)
+                        if (totalPriceWithRto < on_road_price) {
+                            rtoPrice = Math.round(rtoPrice)
+                            rto_price = rtoPrice
                         } else {
-                            insPrice = Math.round(otherPrice)
+                            rto_price = 0
                         }
-                        insurance_price = Math.round(finalInsuranceData + insPrice);
-                        insurance_price = insurance_price;
-                    } else {
-                        other_price = 0
-                        insurance_price = 0
+                        var totalPriceWithRtoInsurance = (showroom_price + rtoPrice + finalInsuranceData)
+                        if (totalPriceWithRtoInsurance < on_road_price) {
+                            var otherPrice = on_road_price - totalPriceWithRtoInsurance
+                            if (otherPrice > 500) {
+                                otherPrice = Math.round(otherPrice)
+                                other_price = otherPrice
+                                var insPrice = 0
+                            } else {
+                                insPrice = Math.round(otherPrice)
+                            }
+                            insurance_price = Math.round(finalInsuranceData + insPrice);
+                            insurance_price = insurance_price;
+                        } else {
+                            other_price = 0
+                            insurance_price = 0
+                        }
                     }
                 }
                 const is_popular_search = 1;
-                const is_upcoming = 0;
+                const is_upcoming = val.upcoming === true ? 0 : 1;
                 const is_latest = 0;
-                const is_content_writer = 1;
+                const is_content_writer = val.upcoming === true ? 1 : 0;
 
                 const brandobj = {
                     id: id,
                     category_id: category_id,
                     brand_id: brand_id,
+                    brand_php_id: brand_php_id,
+                    category_php_id: category_php_id,
                     link: link,
                     brand_php_id : brand_php_id,
                     scrap_type: input.scrap_type,
@@ -221,17 +232,18 @@ const scrap_bike = async (input, brand) => {
                 }
 
                 let bike_exist = await vehicle_information.findOne({ $and: [{ brand_id: brand_id }, { model_name: model_name }] })
-                // const [rows, filed] = await con.query("SELECT * FROM `vehicle_information` WHERE `brand_id`= " + `'${brand_id}'` + " AND `model_name` LIKE " + `'${model_name}'`)
-                // const bike_exist = rows[0]
+
                 let model_url = "https://www.bikedekho.com" + val.modelUrl
                 let images_url = "https://www.bikedekho.com" + val.modelPictureURL
+
+
                 if (bike_exist) {
                     var bike_data = await vehicle_information.findOneAndUpdate({ $and: [{ brand_id: brand_id }, { model_name: model_name }] }, brandobj, { new: true })
                     let d = await get_other_details(model_url, images_url, brandobj, bike_exist._id)
-                    console.log("bike_exist")
+                    // console.log("bike_exist")
                 } else {
                     let craete = await vehicle_information.create(brandobj)
-                    console.log("bike_exist craete", craete)
+                    // console.log("bike_exist craete", craete)
                     await get_other_details(model_url, images_url, brandobj, craete._id)
                 }
             }
@@ -256,12 +268,15 @@ const get_specific_bike = async (link, input1, brand) => {
         return (await helper.macthError('Model not Found'))
     }
     var new_bike_url = "https://www.bikedekho.com/" + brand.name + "-bikes";
-    let brand_id = brand._id;
-    let brand_php_id = brand.id
+    var brand_id = brand.id;
     var data_res_arr = await scrap_common_model(new_bike_url);
-    if ('items' in data_res_arr) {
+    if ('items' in data_res_arr || "upcomingCars" in data_res_arr) {
+        data_res_arr.upcomingCars.items.map(item => {
+            data_res_arr.items.push(item)
+        })
         for (const val of data_res_arr.items) {
             if (res_specific_bike == val.modelName) {
+                console.log("val>>>", val)
                 const model_name = val.modelName ? val.modelName : "NA"
                 const fuel_type = val.fuelType ? val.fuelType : "NA"
                 let avg_rating = 0
@@ -320,7 +335,7 @@ const get_specific_bike = async (link, input1, brand) => {
                         on_road_price = val.minOnRoadPrice
                     }
                 }
-                axios.get("https://www.bikedekho.com" + val.otherLinks.url,{timeout:6000}).then(async (client) => {
+                axios.get("https://www.bikedekho.com" + val.otherLinks.url).then(async (client) => {
                     var html = cheerio.load(client.data).html()
                     if (html) {
                         var response = html.split('</script>');
@@ -410,7 +425,6 @@ const get_specific_bike = async (link, input1, brand) => {
                             // id: id,
                             category_id: category_id,
                             brand_id: brand_id,
-                            brand_php_id:brand_php_id,
                             link: link,
                             scrap_type: input1.scrap_type,
                             model_name: model_name,
@@ -452,17 +466,16 @@ const get_specific_bike = async (link, input1, brand) => {
                             // const update = await con.query(qr)
                             await get_other_details(model_url, images_url, dataObj, bike_exist._id)
 
-                        } else {
-                            // const qr = ("INSERT INTO vehicle_information( brand_id, category_id, bodytype_id, model_name, fuel_type, avg_rating, review_count, variant_name, min_price, max_price, image, status, launched_at, Launch_date, model_popularity, mileage, engine, style_type, max_power, showroom_price, rto_price, insurance_price, other_price, is_content_writer, on_road_price, is_popular_search, is_upcoming, is_latest, link )") + ' VALUES ' + (`(${brand_id}, ${category_id},${bodytype_id},'${model_name}','${fuel_type}',${avg_rating},${review_count},'${variant_name}',${min_price},${max_price},'${image}','${status}','${launched_at}','${Launch_date}',${model_popularity},${mileage},${engine},'${style_type}','${max_power}',${showroom_price},${rto_price},${insurance_price},${other_price},${is_content_writer},${on_road_price},${is_popular_search},${is_upcoming},${is_latest},'${link}')`)
-                            var responseOfCreate = await vehicle_information.create(dataObj)
-                            // let craete = await con.query(qr)
-                            await get_other_details(model_url, images_url, dataObj, responseOfCreate._id)
+                } else {
+                    // const qr = ("INSERT INTO vehicle_information( brand_id, category_id, bodytype_id, model_name, fuel_type, avg_rating, review_count, variant_name, min_price, max_price, image, status, launched_at, Launch_date, model_popularity, mileage, engine, style_type, max_power, showroom_price, rto_price, insurance_price, other_price, is_content_writer, on_road_price, is_popular_search, is_upcoming, is_latest, link )") + ' VALUES ' + (`(${brand_id}, ${category_id},${bodytype_id},'${model_name}','${fuel_type}',${avg_rating},${review_count},'${variant_name}',${min_price},${max_price},'${image}','${status}','${launched_at}','${Launch_date}',${model_popularity},${mileage},${engine},'${style_type}','${max_power}',${showroom_price},${rto_price},${insurance_price},${other_price},${is_content_writer},${on_road_price},${is_popular_search},${is_upcoming},${is_latest},'${link}')`)
+                    var responseOfCreate = await vehicle_information.create(dataObj)
+                    // let craete = await con.query(qr)
+                    await get_other_details(model_url, images_url, dataObj, responseOfCreate._id)
 
-                        }
+                }
 
 
-                    }
-                })
+
             }
         }
         return (await helper.dataResponse('Vehicle Successfully Scrapped.'))

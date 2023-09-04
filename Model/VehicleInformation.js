@@ -3,8 +3,14 @@ import mongoose from "mongoose";
 var vehicle_informationSchema = new mongoose.Schema({
     id: Number,
     brand_id: mongoose.Schema.Types.ObjectId,
+<<<<<<< HEAD
     category_id: Number,
     brand_php_id : Number,
+=======
+    category_id: mongoose.Schema.Types.ObjectId,
+    category_php_id: Number,
+    brand_php_id: Number,
+>>>>>>> 13cae5fc2c421ad46497c060300bed0692d3b466
     model_name: {
         type: String,
         default: "NA"

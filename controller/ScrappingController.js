@@ -30,7 +30,10 @@ const get_brand = async (req, res) => {
 const scrap_data = async (req, res) => {
     var input = req.body
     var brand = await Brands.findOne({ name: input.brand })
+<<<<<<< HEAD
     console.log(brand)
+=======
+>>>>>>> 13cae5fc2c421ad46497c060300bed0692d3b466
 
     // let queryData = con.query("SELECT * FROM `brands` WHERE `name`= " + `'${input.brand}'`, (err, result) => {
     //     brand = result[0]
@@ -38,7 +41,10 @@ const scrap_data = async (req, res) => {
     // })
     // let [rows, filed] = await con.query("SELECT * FROM `brands` WHERE `name`= " + `'${input.brand}'`)
     // let brand = rows[0]
+<<<<<<< HEAD
     
+=======
+>>>>>>> 13cae5fc2c421ad46497c060300bed0692d3b466
 
     if (input.category == "" || !input.category) {
         return res.send(await helper.requiredError('Select Category'))

@@ -1,22 +1,24 @@
 
 // import con from "../connecttion/mysqlconn.js"
 import '../connecttion/conn.js'
-import Cataroies from "../Model/categories.js"
 import bodytypes from "../Model/BodyType.js"
 import vehicle_model_color from "../Model/VehicleModelColor.js"
+import Cataroies from "../Model/categories.js"
 import Brands from "../Model/Brands.js"
 import VariantSpecification from "../Model/VariantSpecification.js"
 import vehicle_information from "../Model/VehicleInformation.js"
 import VariantKey from "../Model/VariantKeySpec.js"
 import PriceVariant from "../Model/priceVariant.js"
-
+import keyspecificationModel from "../Model/keyspecification.js"
 
 const categories = async (req, res) => {
     return
     try {
-        con.query("SELECT * FROM `categories`", (err, result, fileds) => {
-            if (err) throw err
-            result.map(async (val) => {
+        const result = await con.query("SELECT * FROM `categories`")
+        const data = result[0]
+        for (const val of data) {
+            const ifExistDoc = await Cataroies.findOne({ category_name: val.category_name })
+            if (!ifExistDoc) {
                 const data = Cataroies({
                     id: val.id,
                     category_name: val.category_name,
@@ -24,15 +26,15 @@ const categories = async (req, res) => {
                     thumb_image: val.thumb_image,
                 })
                 var dd = await data.save()
-            })
-            res.send(result)
-        })
+            }
+        }
+        res.send("Categories Added!!!")
     } catch (err) {
         console.log(err);
     }
-
 }
 
+<<<<<<< HEAD
 // const brands = async (req, res) => {
 //     try {
 //         con.query("SELECT * FROM `brands` WHERE `deleted_at` IS NULL", (err, result, fileds) => {
@@ -57,9 +59,40 @@ const categories = async (req, res) => {
 //     } catch (err) {
 //         console.log(err);
 //     }
+=======
+const brands = async (req, res) => {
+    try {
+        const result = await con.query("SELECT * FROM `brands` WHERE `deleted_at` IS NULL")
+        const data = result[0]
+
+        for (const val of data) {
+            const ifExistDoc = await Brands.findOne({ name: val.name })
+            if (!ifExistDoc) {
+                const data = Brands({
+                    id: val.id,
+                    category_id: val.category_id,
+                    name: val.name,
+                    headtag: val.headtag,
+                    test_drive_link: val.test_drive_link,
+                    is_popular: val.is_popular,
+                    title: val.title,
+                    logo: val.logo,
+                    createdAt: val.created_at,
+                    updatedAt: val.updated_at,
+                })
+                var dd = await data.save()
+            }
+
+        }
+        res.send("Brand Insreted!!!!")
+    } catch (err) {
+        console.log(err);
+    }
+>>>>>>> 13cae5fc2c421ad46497c060300bed0692d3b466
 
 // }
 
+<<<<<<< HEAD
 // const bodytype = async (req, res) => {
 //     try {
 //         con.query("SELECT * FROM `bodytypes` WHERE `deleted_at` IS NULL", (err, result, fileds) => {
@@ -82,6 +115,59 @@ const categories = async (req, res) => {
 //     } catch (err) {
 //         console.log(err);
 //     }
+=======
+const bodytype = async (req, res) => {
+    try {
+        const result = await con.query("SELECT * FROM `bodytypes` WHERE `deleted_at` IS NULL")
+        const data = result[0]
+
+        for (const val of data) {
+            const ifExistDoc = await bodytypes.findOne({ name: val.name })
+            if (!ifExistDoc) {
+                const data = bodytypes({
+                    id: val.id,
+                    category_id: val.category_id,
+                    name: val.name,
+                    image: val.image,
+                    status: val.status,
+                    position: val.position,
+                    createdAt: val.created_at,
+                    updatedAt: val.updated_at,
+                })
+                var dd = await data.save()
+            }
+        }
+        res.send("Body type inserted!!!")
+    } catch (err) {
+        console.log(err);
+    }
+
+}
+const keyspecification = async (req, res) => {
+    try {
+        const result = await con.query("SELECT * FROM `keyspecification` WHERE `deleted_at` IS NULL")
+        const data = result[0]
+
+        for (const val of data) {
+            const ifExistDoc = await keyspecificationModel.findOne({ name: val.name })
+            if (!ifExistDoc) {
+                const data = keyspecificationModel({
+                    id: val.id,
+                    name: val.name,
+                    icon: val.icon,
+                    deleted_by: val.deleted_by,
+                    deleted_at: val.deleted_at,
+                    createdAt: val.created_at,
+                    updatedAt: val.updated_at,
+                })
+                var dd = await data.save()
+            }
+        }
+        res.send("Keyspecification inserted!!!")
+    } catch (err) {
+        console.log(err);
+    }
+>>>>>>> 13cae5fc2c421ad46497c060300bed0692d3b466
 
 // }
 
@@ -221,6 +307,7 @@ const categories = async (req, res) => {
 //     }
 // }
 
+<<<<<<< HEAD
 // const price_variants = async (req, res) => {
 //     try {
 //         con.query("SELECT * FROM `vehicle_price_variant` WHERE `vehicle_information_id` = 79", (err, result, fileds) => {
@@ -263,3 +350,45 @@ const categories = async (req, res) => {
 
 // export default { categories, brands, bodytype, vehicalcolor, variant_specifications, vehicle_informations, variant_key_specs, price_variants }
 export default { categories }
+=======
+const price_variants = async (req, res) => {
+    try {
+        con.query("SELECT * FROM `vehicle_price_variant` WHERE `vehicle_information_id` = 79", (err, result, fileds) => {
+            if (err) throw err
+            result.map(async (val) => {
+                const data = PriceVariant({
+                    id: val.id,
+                    vehicle_information_id: val.vehicle_information_id,
+                    name: val.name,
+                    link: val.link,
+                    engine: val.engine,
+                    price: val.price,
+                    price_range: val.price_range,
+                    status: val.status,
+                    image: val.image,
+                    fuel_type: val.fuel_type,
+                    ex_show_room_rice: val.ex_show_room_rice,
+                    mileage: val.mileage,
+                    on_road_price: val.on_road_price,
+                    latest_update: val.latest_update,
+                    price_range: val.price_range,
+                    insurance_price: val.insurance_price,
+                    rto_price: val.rto_price,
+                    other_price: val.other_price,
+                    review_count: val.review_count,
+                    rating: val.rating,
+                    launched_at: val.launched_at,
+                    is_scrapping: val.is_scrapping,
+                    createdAt: val.created_at,
+                    updatedAt: val.updated_at,
+                })
+                var dd = await data.save()
+            })
+            res.send(result)
+        })
+    } catch (error) {
+        console.log(error);
+    }
+}
+export default { categories, brands, bodytype, vehicalcolor, variant_specifications, vehicle_informations, variant_key_specs, price_variants, keyspecification }
+>>>>>>> 13cae5fc2c421ad46497c060300bed0692d3b466
