@@ -1,24 +1,23 @@
 
-import mysql from 'mysql2/promise'
-// const con = mysql.createConnection({
+// import mysql from 'mysql2/promise'
+// // const con = mysql.createConnection({
+// //     host: 'localhost',
+// //     user: 'root',
+// //     password: '',
+// //     database: 'rto_sumit'
+// // })
+
+// const pool = mysql.createPool({
 //     host: 'localhost',
 //     user: 'root',
 //     password: '',
-//     database: 'rto_sumit'
-// })
+//     database: 'rto_sumit',
+//     waitForConnections: true,
+//     connectionLimit: 10,
+//     queueLimit: 0,
+// });
 
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'rto_sumit',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-});
-
-const con = await pool.getConnection();
-
+const con = "fkjd"
 // con.connect((err) => {
 //     if (err) throw err
 //     console.log('Database Connected')

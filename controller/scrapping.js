@@ -1,4 +1,3 @@
-
 import cheerio from "cheerio";
 import axios from "axios";
 import Bodytypes from '../Model/BodyType.js'
@@ -18,8 +17,8 @@ const scrap_bike = async (input, brand) => {
     try {
         category_id = input.category
         link = input.link
-        var brand = brand
-        var brand_id = brand.id
+        let brand_id = brand._id
+        let brand_php_id = brand.id
         if (input.scrap_type == "brand") {
             var new_bike_url = "https://www.bikedekho.com/" + brand.name + "-bikes"
         } else {
@@ -31,7 +30,7 @@ const scrap_bike = async (input, brand) => {
 
         if ('items' in data_res_arr) {
             for (const val of data_res_arr.items) {
-                brand_id = brand.id
+                brand_id = brand._id
                 const model_name = val.modelName ? val.modelName : "NA"
                 const fuel_type = val.fuelType ? val.fuelType : "NA"
                 let avg_rating = 0
@@ -101,7 +100,7 @@ const scrap_bike = async (input, brand) => {
                         on_road_price = val.minOnRoadPrice
                     }
                 }
-                var client = await axios.get("https://www.bikedekho.com" + val.otherLinks.url)
+                var client = await axios.get("https://www.bikedekho.com" + val.otherLinks.url,{timeout:6000})
                 var html = cheerio.load(client.data).html()
                 var response = html.split('</script>');
                 var data_respone = get_string_between(response[11], '<script>window.__INITIAL_STATE__ = ', " window.__isWebp =  false;")
@@ -189,6 +188,7 @@ const scrap_bike = async (input, brand) => {
                     category_id: category_id,
                     brand_id: brand_id,
                     link: link,
+                    brand_php_id : brand_php_id,
                     scrap_type: input.scrap_type,
                     model_name: model_name,
                     fuel_type: fuel_type,
@@ -256,7 +256,8 @@ const get_specific_bike = async (link, input1, brand) => {
         return (await helper.macthError('Model not Found'))
     }
     var new_bike_url = "https://www.bikedekho.com/" + brand.name + "-bikes";
-    var brand_id = brand.id;
+    let brand_id = brand._id;
+    let brand_php_id = brand.id
     var data_res_arr = await scrap_common_model(new_bike_url);
     if ('items' in data_res_arr) {
         for (const val of data_res_arr.items) {
@@ -319,7 +320,7 @@ const get_specific_bike = async (link, input1, brand) => {
                         on_road_price = val.minOnRoadPrice
                     }
                 }
-                axios.get("https://www.bikedekho.com" + val.otherLinks.url).then(async (client) => {
+                axios.get("https://www.bikedekho.com" + val.otherLinks.url,{timeout:6000}).then(async (client) => {
                     var html = cheerio.load(client.data).html()
                     if (html) {
                         var response = html.split('</script>');
@@ -409,6 +410,7 @@ const get_specific_bike = async (link, input1, brand) => {
                             // id: id,
                             category_id: category_id,
                             brand_id: brand_id,
+                            brand_php_id:brand_php_id,
                             link: link,
                             scrap_type: input1.scrap_type,
                             model_name: model_name,
@@ -472,7 +474,7 @@ const get_specific_bike = async (link, input1, brand) => {
 
 
 const scrap_common_model = async (url) => {
-    const res = await axios.get(url)
+    const res = await axios.get(url,{timeout:6000})
     var crawler = cheerio.load(res.data).html()
     var html = crawler.split('</script>');
     var data_respone = get_string_between(html[11], '<script>window.__INITIAL_STATE__ = ', " window.__isWebp =  false;")
@@ -497,7 +499,7 @@ const get_other_details = async (url, images_url, dataObj, model_id) => {
     var row
     var key
     var temp
-    await axios.get(url).then(async (res) => {
+    await axios.get(url,{timeout:6000}).then(async (res) => {
         var $ = cheerio.load(res.data)
         /*Bike highlight*/
         $('div[id="model-highlight"]').each((index, node) => {
@@ -561,7 +563,7 @@ const get_other_details = async (url, images_url, dataObj, model_id) => {
     })
 
     //All price variant
-    await axios.get(url).then(async (responsed) => {
+    await axios.get(url,{timeout:6000}).then(async (responsed) => {
         var $ = cheerio.load(responsed.data)
         $(responsed.data).find('table[class="allvariant contentHold"] tbody tr').each(async (index, node) => {
             let model_link
@@ -664,7 +666,6 @@ const get_bike_specification = async (url, vehicle_information, variant = 0, dat
         if ('specification' in colors_data.specsTechnicalJson) {
 
             for (const value of colors_data.specsTechnicalJson.specification) {
-
                 // const cheakidOfVarSpec = await VariantSpecification.findOne().select({ id: 1 }).sort({ id: -1 })
                 // const tokenidVarSpec = cheakidOfVarSpec !== 0 ? cheakidOfVarSpec?.id + 1 : 1
                 // const idOfVarSpec = tokenidVarSpec

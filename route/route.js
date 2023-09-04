@@ -11,14 +11,14 @@ router.post('/scrap_bike', Bikecontroler.scrap_data)
 
 //*********************mysql to Mongo start**************************** */
 
-router.post("/catagroies", MysqltoMongodb.categories)
-router.post("/brands", MysqltoMongodb.brands)
-router.post("/bodytype", MysqltoMongodb.bodytype)
-router.post("/vehicalcolor", MysqltoMongodb.vehicalcolor)
-router.post("/variant_specifications", MysqltoMongodb.variant_specifications)
-router.post("/vehicle_information", MysqltoMongodb.vehicle_informations)
-router.post("/variant_key_specs", MysqltoMongodb.variant_key_specs)
-router.post("/price_variants", MysqltoMongodb.price_variants)
+// router.post("/catagroies", MysqltoMongodb.categories)
+// router.post("/brands", MysqltoMongodb.brands)
+// router.post("/bodytype", MysqltoMongodb.bodytype)
+// router.post("/vehicalcolor", MysqltoMongodb.vehicalcolor)
+// router.post("/variant_specifications", MysqltoMongodb.variant_specifications)
+// router.post("/vehicle_information", MysqltoMongodb.vehicle_informations)
+// router.post("/variant_key_specs", MysqltoMongodb.variant_key_specs)
+// router.post("/price_variants", MysqltoMongodb.price_variants)
 
 router.post("/deleteMany", async (req, res) => {
     const collectionsToDelete = ['variantkeys', 'variantspecifications', 'vehicle_informations', 'vehicle_model_colors', 'pricevariants'];
