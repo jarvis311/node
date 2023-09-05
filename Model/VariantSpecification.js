@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const VariantSpecificationSchema = new mongoose.Schema({
-    id: {
+    php_id: {
         type: Number,
         default: 1
     },

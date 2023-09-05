@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 
+
 var PriceVariant_schema = new mongoose.Schema({
-    id: Number,
+    php_id: Number,
     vehicle_information_id: mongoose.Schema.Types.ObjectId,
     name: String,
     link: {
@@ -82,6 +83,8 @@ var PriceVariant_schema = new mongoose.Schema({
     }
 }, { timestamps: true })
 
+
 const PriceVariant = mongoose.model('PriceVariant', PriceVariant_schema)
+
 
 export default PriceVariant

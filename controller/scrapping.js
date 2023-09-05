@@ -11,13 +11,29 @@ import VariantSpecification from "../Model/VariantSpecification.js";
 import VariantKey from "../Model/VariantKeySpec.js";
 import vehicle_model_color from "../Model/VehicleModelColor.js";
 import CategoryModel from "../Model/categories.js"
+// import getNextVariantKeyId from "../helper/helper.js"
 import dd from "dump-die";
 
 var link;
-
+const getNextVariantKeyId = async () => {
+    try {
+        // Find the maximum php_id in the VariantKey collection
+        const maxPhpIdDoc = await VariantKey.findOne({}, { php_id: 1 }).sort({ php_id: -1 });
+        if (maxPhpIdDoc) {
+            // If there are existing records, increment the maximum php_id by 1
+            return maxPhpIdDoc.php_id + 1;
+        } else {
+            // If no records exist, start with php_id = 1
+            return 1;
+        }
+    } catch (error) {
+        // Handle any errors that may occur during database query
+        console.error('Error while fetching the next VariantKeyId:', error);
+        throw error;
+    }
+}
 const scrap_bike = async (input, brand) => {
     try {
-
         // category_id = input.category
         link = input.link
         var brand = brand
@@ -42,9 +58,8 @@ const scrap_bike = async (input, brand) => {
         }
         // dd("sdhasfjkl>>>", data_res_arr.items)
         if ('items' in data_res_arr) {
-
             for (const val of data_res_arr.items) {
-                console.log("val>>>>>", val)
+                // console.log("val>>>>>", val)
                 brand_id = brand._id
                 const model_name = val.modelName ? val.modelName : "NA"
                 const fuel_type = val.fuelType ? val.fuelType : "NA"
@@ -62,9 +77,10 @@ const scrap_bike = async (input, brand) => {
                 } else {
                     image = "NA"
                 }
-                const cheakidOfVehicalInfo = await vehicle_information.findOne().select({ id: 1 }).sort({ id: -1 })
-                const tokenIdOfVehicalInfo = cheakidOfVehicalInfo ? cheakidOfVehicalInfo.id + 1 : 1
-                const id = tokenIdOfVehicalInfo
+                const cheakidOfVehicalInfo = await vehicle_information.findOne().select({ php_id: 1 }).sort({ php_id: -1 })
+                const tokenIdOfVehicalInfo = cheakidOfVehicalInfo ? cheakidOfVehicalInfo.php_id + 1 : 1
+                const php_id = tokenIdOfVehicalInfo
+
                 const review_count = val.reviewCount ? val.reviewCount : 0;
                 const variant_name = val.variantName ? val.variantName : "NA";
                 const min_price = val.minPriceNonFormat ? val.minPriceNonFormat : 0;
@@ -91,7 +107,7 @@ const scrap_bike = async (input, brand) => {
                     bodytype_id = findBodyTypeName.id
                 } else {
                     const newBodyTypeId = await Bodytypes.create({
-                        id: id,
+                        // php_id: id,
                         category_id: category_id,
                         name: style_type,
                         image: '',
@@ -201,7 +217,7 @@ const scrap_bike = async (input, brand) => {
                 const is_content_writer = val.upcoming === true ? 1 : 0;
 
                 const brandobj = {
-                    id: id,
+                    php_id: php_id,
                     category_id: category_id,
                     brand_id: brand_id,
                     brand_php_id: brand_php_id,
@@ -229,7 +245,7 @@ const scrap_bike = async (input, brand) => {
                     on_road_price: parseInt(on_road_price),
                     rto_price: rto_price ? parseInt(rto_price.replaceAll(',', '')) : 0,
                     body_type: bodytype_id,
-                    bodytype_id: Number(bodytype_id),
+                    bodytype_id: bodytype_id,
                     insurance_price: insurance_price ? parseInt(insurance_price.replaceAll(',', '')) : 0,
                     other_price: parseInt(other_price),
                     is_popular_search: is_popular_search,
@@ -305,9 +321,9 @@ const get_specific_bike = async (link, input1, brand) => {
                 } else {
                     image = "NA"
                 }
-                let cheakid = await vehicle_information.findOne().select({ id: 1 }).sort({ id: -1 })
-                let tokenid = cheakid ? cheakid.id + 1 : 1
-                const id = tokenid
+                let cheakid = await vehicle_information.findOne().select({ php_id: 1 }).sort({ php_id: -1 })
+                let tokenid = cheakid ? cheakid.php_id + 1 : 1
+                const php_id = tokenid
                 const review_count = val.reviewCount ? val.reviewCount : 0
                 const variant_name = val.variantName ? val.variantName : "NA"
                 const min_price = val.minPriceNonFormat ? val.minPriceNonFormat : 0;
@@ -437,7 +453,7 @@ const get_specific_bike = async (link, input1, brand) => {
                 const is_content_writer = val.upcoming === true ? 1 : 0;
 
                 const dataObj = {
-                    // id: id,
+                    php_id: php_id,
                     category_id: category_id,
                     brand_id: brand_id,
                     brand_php_id: brand_php_id,
@@ -567,6 +583,10 @@ const get_other_details = async (url, images_url, dataObj, model_id) => {
 
         if ('colors' in colors_data_arr) {
             for (const val of colors_data_arr.colors) {
+                let cheakidModelColor = await vehicle_model_color.findOne().select({ php_id: 1 }).sort({ php_id: -1 })
+                let tokenidModelColor = cheakidModelColor ? cheakidModelColor.php_id + 1 : 1
+                const php_id = tokenidModelColor
+
                 if (val.url) {
                     if (val.url == 'HTTP/1.0 200 OK') {
                     } else {
@@ -576,6 +596,7 @@ const get_other_details = async (url, images_url, dataObj, model_id) => {
                     image = "NA"
                 }
                 let input_color = {
+                    php_id: php_id,
                     vehicle_information_id: model_id,
                     color_name: val.name,
                     color_code: val.hexCode,
@@ -649,11 +670,12 @@ const get_other_details = async (url, images_url, dataObj, model_id) => {
 
 
             })
-            let cheakidPriceVariant = await PriceVariant.find().select({ id: 1 }).sort({ _id: -1 }).limit(1)
-            let tokenidPriceVariant = cheakidPriceVariant.length !== 0 ? cheakidPriceVariant[0].id + 1 : 1
-            const idPriceVariant = tokenidPriceVariant
+            let cheakidPriceVariant = await PriceVariant.findOne().select({ php_id: 1 }).sort({ php_id: -1 })
+            let tokenidPriceVariant = cheakidPriceVariant ? cheakidPriceVariant.php_id + 1 : 1
+            const php_id = tokenidPriceVariant
+
             let dataobje = {
-                id: idPriceVariant,
+                php_id: php_id,
                 vehicle_information_id: vehicle_information_id,
                 name: name,
                 link: link,
@@ -677,13 +699,14 @@ const get_other_details = async (url, images_url, dataObj, model_id) => {
                 await PriceVariant.findOneAndUpdate({ $and: [{ vehicle_information_id: model_id }, { name: model_name }] }, dataobje, { new: true })
             } else {
                 let craeteId = await PriceVariant.create(dataobje)
-                await get_bike_specification(link, model_id, craeteId._id, dataobje)
+                get_bike_specification(link, model_id, craeteId._id, dataobje)
 
             }
 
         })
     })
 }
+
 
 const get_bike_specification = async (url, vehicle_information, variant = 0, dataobje) => {
     console.log("Inside get_bike_specification")
@@ -694,9 +717,8 @@ const get_bike_specification = async (url, vehicle_information, variant = 0, dat
 
     if ('specsTechnicalJson' in colors_data) {
         if ('specification' in colors_data.specsTechnicalJson) {
-
             for (const value of colors_data.specsTechnicalJson.specification) {
-
+                // console.log("value>>>>>>", value)
                 // const cheakidOfVarSpec = await VariantSpecification.findOne().select({ id: 1 }).sort({ id: -1 })
                 // const tokenidVarSpec = cheakidOfVarSpec !== 0 ? cheakidOfVarSpec?.id + 1 : 1
                 // const idOfVarSpec = tokenidVarSpec
@@ -707,276 +729,63 @@ const get_bike_specification = async (url, vehicle_information, variant = 0, dat
                     { name: spec_name },
                     { upsert: true, new: true }
                 );
+
                 const spec_id = specExistAndUpdate._id;
                 used_var = {
                     vehicle_information_id: vehicle_information_id,
                     variant_id: variant_id,
                     specification_id: spec_id
                 }
+                // console.log("const value of colors_data.specsTechnicalJson.specification")
                 for (const values of value.items) {
-                    let spec_name = values.text ? values.text : "NA"
-                    let spec_value = values.value ? values.value : "NA"
+                    let spec_name = values.text ? values.text : "NA";
+                    let spec_value = values.value ? values.value : "NA";
 
-                    let v_spe_exist = await VariantKey.findOne({ $and: [{ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { specification_id: spec_id }, { name: spec_name }] })
-                    const cheakidOfVariantKey = await VariantKey.findOne().select({ id: 1 }).sort({ id: -1 })
-                    const tokenIdOfVariantKey = cheakidOfVariantKey ? cheakidOfVariantKey.id + 1 : 1
-                    const VariantKeyIdUnique = tokenIdOfVariantKey
-                    used_var.id = VariantKeyIdUnique
-                    used_var.name = spec_name
-                    used_var.value = spec_value
-                    spec_name, spec_value
-                    // console.log("spec_name ,spec_value", spec_name, "+", spec_value)
-                    used_var.show_overview = 0
-                    used_var.variant_key_id = 0
-                    if (v_spe_exist) {
+                    let v_spe_exist = await VariantKey.findOne({ $and: [{ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { specification_id: spec_id }, { name: spec_name }] });
 
-                        if (spec_name == 'Motor Power') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 32
+                    const myPromise = new Promise(async (resolve, reject) => {
+                        try {
+                            var cheakidOfVariantKey = await VariantKey.findOne().select({ php_id: 1 }).sort({ php_id: -1 });
+                            const tokenIdOfVariantKey = cheakidOfVariantKey ? cheakidOfVariantKey.php_id + 1 : 1;
+                            const VariantKeyIdUnique = tokenIdOfVariantKey;
+                            resolve(VariantKeyIdUnique); // Resolve the promise with the unique ID
+                        } catch (error) {
+                            reject(error); // Reject the promise if there's an error
                         }
-                        if (spec_name == 'Motor Type') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 34
-                        }
-                        if (spec_name == 'Battery Capacity') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 33
-                        }
-                        if (spec_name == 'Engine') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 1
-                        }
-                        if (spec_name == 'Peak Power') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 2
-                        }
-                        if (spec_name == 'Max Torque') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 3
-                        }
-                        if (spec_name == 'Brakes') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 5
-                        }
-                        if (spec_name == 'Cylinders') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 38
-                        }
-                        if (spec_name == 'Kerb Weight') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 48
-                        }
-                        // const updateQr = ("UPDATE " + `variant_key_specs ` + "SET " + `vehicle_information_id = ${vehicle_information_id}, variant_id = ${variant_id}, specification_id = ${spec_id}, name = '${spec_name}',value = '${spec_value}',show_overview = ${used_var.show_overview}, variant_key_id = ${used_var.variant_key_id}  WHERE vehicle_information_id = ${vehicle_information_id} AND variant_id = ${variant_id} AND specification_id = ${spec_id} AND name = '${spec_name}'`)
-                        // const updateVar = await con.query(updateQr)
-                        var update = await VariantKey.findOneAndUpdate({ $and: [{ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { specification_id: spec_id }, { name: spec_name }] }, used_var, { new: true })
-                    } else {
-                        if (spec_name == 'Displacement') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 1
-                            spec_name = "Engine"
-                        }
-                        if (spec_name == 'Peak Power') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 2
-                            spec_name = "Power"
-                        }
-                        if (spec_name == 'Max Torque') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 3
-                            spec_name = "Torque"
-                        }
-                        if (spec_name == 'Mileage') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 4
-                        }
-                        if (spec_name == 'Brakes Rear') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 5
-                            spec_name = "Brakes"
-                        }
-                        if (spec_name == 'Wheels Type') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 6
-                            spec_name = "Type Type"
-                        }
-                        if (spec_name == 'Fuel Type') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 7
-                        }
-                        if (spec_name == 'BHP') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 8
-                        }
-                        if (spec_name == 'City Mileage') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 9
-                        }
-                        if (spec_name == 'Transmission Type') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 10
-                        }
-                        if (spec_name == 'Max Power') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 11
-                        }
-                        if (spec_name == 'Displacement') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 12
-                        }
-                        if (spec_name == 'Max Torque') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 13
-                        }
-                        if (spec_name == 'GVW') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 14
-                        }
-                        if (spec_name == 'Max Speed') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 15
-                        }
-                        if (spec_name == 'Number of Tyre') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 16
-                        }
-                        if (spec_name == 'Fule Tank') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 17
-                        }
-                        if (spec_name == 'Number of Cylinder') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 18
-                        }
-                        if (spec_name == 'Gear Box') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 19
-                        }
-                        if (spec_name == 'Capacity CC') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 20
-                        }
-                        if (spec_name == 'Top Speed') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 21
-                        }
-                        if (spec_name == 'Range') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 22
-                        }
-                        if (spec_name == 'Cruise speed') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 23
-                        }
-                        if (spec_name == 'Guests') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 24
-                        }
-                        if (spec_name == 'Guest Cabin') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 25
-                        }
-                        if (spec_name == 'Crew') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 26
-                        }
-                        if (spec_name == 'Travel range') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 27
-                        }
-                        if (spec_name == 'Max Take Off Weight') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 28
-                        }
-                        if (spec_name == 'Fuel Tank capacity') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 29
-                        }
-                        if (spec_name == 'Body Type') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 30
-                        }
-                        if (spec_name == 'Driving Range') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 31
-                        }
+                    });
 
-                        if (spec_name == 'Motor Power') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 32
+                    myPromise.then(async (VariantKeyIdUnique) => {
+                        used_var.php_id = VariantKeyIdUnique;
+                        used_var.name = spec_name;
+                        used_var.value = spec_value;
+                        used_var.show_overview = 0;
+                        used_var.variant_key_id = 0;
+
+                        if (v_spe_exist) {
+                            let update = await VariantKey.findOneAndUpdate(
+                                { $and: [{ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { specification_id: spec_id }, { name: spec_name }] },
+                                used_var,
+                                { new: true }
+                            );
+                        } else {
+                            let update = await VariantKey.create(used_var);
                         }
-                        if (spec_name == 'Battery Charging Time') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 33
-                        }
-                        if (spec_name == 'Motor Type') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 34
-                        }
-                        if (spec_name == 'Battery Capacity') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 35
-                        }
-                        if (spec_name == 'Cylinders') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 38
-                        }
-                        if (spec_name == 'Seats') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 39
-                        }
-                        if (spec_name == 'Service Cost') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 40
-                        }
-                        if (spec_name == 'Boot Space') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 41
-                        }
-                        if (spec_name == 'Airbags') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 42
-                        }
-                        if (spec_name == 'Drive Type') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 43
-                        }
-                        if (spec_name == 'Payload') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 44
-                        }
-                        if (spec_name == 'ABS') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 45
-                        }
-                        if (spec_name == 'Battery Warranty') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 46
-                        }
-                        if (spec_name == 'Cooling System') {
-                            used_var.show_overview = 0
-                            used_var.variant_key_id = 47
-                        }
-                        if (spec_name == 'Kerb Weight') {
-                            used_var.show_overview = 1
-                            used_var.variant_key_id = 48
-                        }
-                        // const qr = ("INSERT INTO variant_key_specs( vehicle_information_id, variant_id, specification_id, name, value, show_overview, variant_key_id )") + ' VALUES ' + (`(${vehicle_information_id}, ${variant_id},${spec_id},'${spec_name}','${spec_value.replaceAll("'s", " ")}',${used_var.show_overview == "undefined" || undefined ? 0 : used_var.show_overview},${used_var.variant_key_id == "undefined" || undefined ? 0 : used_var.variant_key_id})`)
-                        // let craete = await con.query(qr)
-                        var update = await VariantKey.create(used_var)
-                    }
+                    }).catch((error) => {
+                        console.error("Error:", error);
+                    });
                 }
             }
         }
         if ('keySpecs' in colors_data.specsTechnicalJson) {
-
+            // console.log("keySpecs")
             for (const valudata of colors_data.specsTechnicalJson.keySpecs) {
-
                 if (valudata.title.toLowerCase().includes("specifications")) {
                     var is_specification = 1
                     for (const valdatas of valudata.items) {
                         let u = await VariantKey.findOne({ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { name: valdatas.text })
                         if (u) {
-                            var u2 = await VariantKey.findOneAndUpdate({ _id: u._id }, { is_specification: is_specification }, { new: true })
+                            let u2 = await VariantKey.findOneAndUpdate({ _id: u._id }, { is_specification: is_specification }, { new: true })
+                            console.log("u2.>>>", u2)
                         }
                     }
                 }
@@ -987,6 +796,7 @@ const get_bike_specification = async (url, vehicle_information, variant = 0, dat
                         const u = await VariantKey.findOne({ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { name: valdatas.text })
                         if (u) {
                             let u2 = await VariantKey.findOneAndUpdate({ _id: u._id }, { is_feature: is_feature }, { new: true })
+                            console.log("u232.>>>", u2)
                         }
                     }
                 }
@@ -1020,10 +830,243 @@ const add_other_images = async (images_data_arr2, model_id) => {
 export default { scrap_bike }
 
 
-// echo "# node" >> README.md
-// git init
-// git add README.md
-// git commit -m "first commit"
-// git branch -M main
-// git remote add origin https://github.com/jarvis311/node.git
-// git push -u origin main
+// if (v_spe_exist) {
+
+//     if (spec_name == 'Motor Power') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 32
+//     }
+//     if (spec_name == 'Motor Type') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 34
+//     }
+//     if (spec_name == 'Battery Capacity') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 33
+//     }
+//     if (spec_name == 'Engine') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 1
+//     }
+//     if (spec_name == 'Peak Power') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 2
+//     }
+//     if (spec_name == 'Max Torque') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 3
+//     }
+//     if (spec_name == 'Brakes') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 5
+//     }
+//     if (spec_name == 'Cylinders') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 38
+//     }
+//     if (spec_name == 'Kerb Weight') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 48
+//     }
+//     // const updateQr = ("UPDATE " + `variant_key_specs ` + "SET " + `vehicle_information_id = ${vehicle_information_id}, variant_id = ${variant_id}, specification_id = ${spec_id}, name = '${spec_name}',value = '${spec_value}',show_overview = ${used_var.show_overview}, variant_key_id = ${used_var.variant_key_id}  WHERE vehicle_information_id = ${vehicle_information_id} AND variant_id = ${variant_id} AND specification_id = ${spec_id} AND name = '${spec_name}'`)
+//     // const updateVar = await con.query(updateQr)
+//     var update = await VariantKey.findOneAndUpdate({ $and: [{ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { specification_id: spec_id }, { name: spec_name }] }, used_var, { new: true })
+// } else {
+//     if (spec_name == 'Displacement') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 1
+//         spec_name = "Engine"
+//     }
+//     if (spec_name == 'Peak Power') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 2
+//         spec_name = "Power"
+//     }
+//     if (spec_name == 'Max Torque') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 3
+//         spec_name = "Torque"
+//     }
+//     if (spec_name == 'Mileage') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 4
+//     }
+//     if (spec_name == 'Brakes Rear') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 5
+//         spec_name = "Brakes"
+//     }
+//     if (spec_name == 'Wheels Type') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 6
+//         spec_name = "Type Type"
+//     }
+//     if (spec_name == 'Fuel Type') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 7
+//     }
+//     if (spec_name == 'BHP') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 8
+//     }
+//     if (spec_name == 'City Mileage') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 9
+//     }
+//     if (spec_name == 'Transmission Type') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 10
+//     }
+//     if (spec_name == 'Max Power') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 11
+//     }
+//     if (spec_name == 'Displacement') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 12
+//     }
+//     if (spec_name == 'Max Torque') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 13
+//     }
+//     if (spec_name == 'GVW') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 14
+//     }
+//     if (spec_name == 'Max Speed') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 15
+//     }
+//     if (spec_name == 'Number of Tyre') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 16
+//     }
+//     if (spec_name == 'Fule Tank') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 17
+//     }
+//     if (spec_name == 'Number of Cylinder') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 18
+//     }
+//     if (spec_name == 'Gear Box') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 19
+//     }
+//     if (spec_name == 'Capacity CC') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 20
+//     }
+//     if (spec_name == 'Top Speed') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 21
+//     }
+//     if (spec_name == 'Range') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 22
+//     }
+//     if (spec_name == 'Cruise speed') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 23
+//     }
+//     if (spec_name == 'Guests') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 24
+//     }
+//     if (spec_name == 'Guest Cabin') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 25
+//     }
+//     if (spec_name == 'Crew') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 26
+//     }
+//     if (spec_name == 'Travel range') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 27
+//     }
+//     if (spec_name == 'Max Take Off Weight') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 28
+//     }
+//     if (spec_name == 'Fuel Tank capacity') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 29
+//     }
+//     if (spec_name == 'Body Type') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 30
+//     }
+//     if (spec_name == 'Driving Range') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 31
+//     }
+
+//     if (spec_name == 'Motor Power') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 32
+//     }
+//     if (spec_name == 'Battery Charging Time') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 33
+//     }
+//     if (spec_name == 'Motor Type') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 34
+//     }
+//     if (spec_name == 'Battery Capacity') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 35
+//     }
+//     if (spec_name == 'Cylinders') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 38
+//     }
+//     if (spec_name == 'Seats') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 39
+//     }
+//     if (spec_name == 'Service Cost') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 40
+//     }
+//     if (spec_name == 'Boot Space') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 41
+//     }
+//     if (spec_name == 'Airbags') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 42
+//     }
+//     if (spec_name == 'Drive Type') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 43
+//     }
+//     if (spec_name == 'Payload') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 44
+//     }
+//     if (spec_name == 'ABS') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 45
+//     }
+//     if (spec_name == 'Battery Warranty') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 46
+//     }
+//     if (spec_name == 'Cooling System') {
+//         used_var.show_overview = 0
+//         used_var.variant_key_id = 47
+//     }
+//     if (spec_name == 'Kerb Weight') {
+//         used_var.show_overview = 1
+//         used_var.variant_key_id = 48
+//     }
+//     // const qr = ("INSERT INTO variant_key_specs( vehicle_information_id, variant_id, specification_id, name, value, show_overview, variant_key_id )") + ' VALUES ' + (`(${vehicle_information_id}, ${variant_id},${spec_id},'${spec_name}','${spec_value.replaceAll("'s", " ")}',${used_var.show_overview == "undefined" || undefined ? 0 : used_var.show_overview},${used_var.variant_key_id == "undefined" || undefined ? 0 : used_var.variant_key_id})`)
+//     // let craete = await con.query(qr)
+//     var update = await VariantKey.create(used_var)
+// }
+
+
+
+

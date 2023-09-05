@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 var VariantKeySpec = new mongoose.Schema({
-    id: {
+    php_id: {
         type: Number,
         default: 0
     },

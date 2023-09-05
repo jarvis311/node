@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 
 const BrandsSchema = new mongoose.Schema({
+    // php_id: Number,
     id: Number,
     category_id: Number,
     name: String,

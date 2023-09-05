@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const bodytypsSchema = new mongoose.Schema({
+    // php_id: Number,
     id: Number,
     category_id: mongoose.Schema.Types.ObjectId,
     name: String,

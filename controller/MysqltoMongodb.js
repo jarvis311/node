@@ -19,7 +19,7 @@ const categories = async (req, res) => {
             const ifExistDoc = await Cataroies.findOne({ category_name: val.category_name })
             if (!ifExistDoc) {
                 const data = Cataroies({
-                    id: val.id,
+                    php_id: val.id,
                     category_name: val.category_name,
                     status: val.status,
                     thumb_image: val.thumb_image,
@@ -42,7 +42,7 @@ const brands = async (req, res) => {
             const ifExistDoc = await Brands.findOne({ name: val.name })
             if (!ifExistDoc) {
                 const data = Brands({
-                    id: val.id,
+                    php_id: val.id,
                     category_id: val.category_id,
                     name: val.name,
                     headtag: val.headtag,
@@ -73,7 +73,7 @@ const bodytype = async (req, res) => {
             const ifExistDoc = await bodytypes.findOne({ name: val.name })
             if (!ifExistDoc) {
                 const data = bodytypes({
-                    id: val.id,
+                    php_id: val.id,
                     category_id: val.category_id,
                     name: val.name,
                     image: val.image,
@@ -100,7 +100,7 @@ const keyspecification = async (req, res) => {
             const ifExistDoc = await keyspecificationModel.findOne({ name: val.name })
             if (!ifExistDoc) {
                 const data = keyspecificationModel({
-                    id: val.id,
+                    php_id: val.id,
                     name: val.name,
                     icon: val.icon,
                     deleted_by: val.deleted_by,

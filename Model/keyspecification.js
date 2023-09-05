@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
 const keyspecificationationSchema = new mongoose.Schema({
+    // php_id: {
+    //     type: Number,
+    //     default: 1
+    // },
     id: {
         type: Number,
         default: 1

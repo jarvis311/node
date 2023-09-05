@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 var vehicle_informationSchema = new mongoose.Schema({
-    id: Number,
+    php_id: Number,
     brand_id: mongoose.Schema.Types.ObjectId,
     category_id: mongoose.Schema.Types.ObjectId,
     category_php_id: Number,

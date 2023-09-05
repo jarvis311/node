@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 const cataroiesSchema = new mongoose.Schema({
+    // php_id: Number,
     id: Number,
     category_name: String,
     status: { type: Number, default: 1 },

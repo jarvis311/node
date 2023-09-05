@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 var vehicle_model_colorSchema = new mongoose.Schema({
-    id: Number,
+    php_id: Number,
     vehicle_information_id: mongoose.Schema.Types.ObjectId,
     color_name: {
         type: String,
