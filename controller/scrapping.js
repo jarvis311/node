@@ -15,23 +15,7 @@ import CategoryModel from "../Model/categories.js"
 import dd from "dump-die";
 
 var link;
-const getNextVariantKeyId = async () => {
-    try {
-        // Find the maximum php_id in the VariantKey collection
-        const maxPhpIdDoc = await VariantKey.findOne({}, { php_id: 1 }).sort({ php_id: -1 });
-        if (maxPhpIdDoc) {
-            // If there are existing records, increment the maximum php_id by 1
-            return maxPhpIdDoc.php_id + 1;
-        } else {
-            // If no records exist, start with php_id = 1
-            return 1;
-        }
-    } catch (error) {
-        // Handle any errors that may occur during database query
-        console.error('Error while fetching the next VariantKeyId:', error);
-        throw error;
-    }
-}
+
 const scrap_bike = async (input, brand) => {
     try {
         // category_id = input.category
@@ -294,7 +278,7 @@ const get_specific_bike = async (link, input1, brand) => {
     var brand_id = brand._id;
     let brand_php_id = brand.id
     const findCategory = await CategoryModel.findOne({ id: input1.category })
-    console.log("findCategory>>>>", findCategory)
+    // console.log("findCategory>>>>", findCategory)
     let category_id = findCategory._id
     let category_php_id = findCategory.id
     var data_res_arr = await scrap_common_model(new_bike_url);
@@ -304,7 +288,7 @@ const get_specific_bike = async (link, input1, brand) => {
         })
         for (const val of data_res_arr.items) {
             if (res_specific_bike == val.modelName) {
-                console.log("val>>>", val)
+                // console.log("val>>>", val)
                 const model_name = val.modelName ? val.modelName : "NA"
                 const fuel_type = val.fuelType ? val.fuelType : "NA"
                 let avg_rating = 0
@@ -506,9 +490,6 @@ const get_specific_bike = async (link, input1, brand) => {
                     await get_other_details(model_url, images_url, dataObj, responseOfCreate._id)
 
                 }
-
-
-
             }
         }
         return (await helper.dataResponse('Vehicle Successfully Scrapped.'))
@@ -614,9 +595,11 @@ const get_other_details = async (url, images_url, dataObj, model_id) => {
     })
 
     //All price variant
-    await axios.get(url).then(async (responsed) => {
+    axios.get(url).then(async (responsed) => {
         var $ = cheerio.load(responsed.data)
-        $(responsed.data).find('table[class="allvariant contentHold"] tbody tr').each(async (index, node) => {
+        const tableRows = $(responsed.data).find('table[class="allvariant contentHold"] tbody tr')
+
+        for (const node of tableRows) {
             let model_link
             let model_name
             if ($(node).find('td').text()) {
@@ -698,18 +681,33 @@ const get_other_details = async (url, images_url, dataObj, model_id) => {
             if (exist) {
                 await PriceVariant.findOneAndUpdate({ $and: [{ vehicle_information_id: model_id }, { name: model_name }] }, dataobje, { new: true })
             } else {
-                let craeteId = await PriceVariant.create(dataobje)
-                get_bike_specification(link, model_id, craeteId._id, dataobje)
+                PriceVariant.create(dataobje).then((craeteId) => {
+                    get_bike_specification(link, model_id, craeteId._id, dataobje)
+                    console.log("Price variant createed")
+                })
+
+                // get_bike_specification(link, model_id, craeteId._id, dataobje)
+                // console.log('Outside_get_bike_specification')
 
             }
 
-        })
+        }
     })
 }
 
+// const asyncDemo = async (url) => {
+//     console.log(url)
+//     let colors_data = await scrap_common_model(url)
+//     if (colors_data) {
+//         console.log("if")
+//     }
+//     else {
+//         console.log("else")
+//     }
 
+// }
 const get_bike_specification = async (url, vehicle_information, variant = 0, dataobje) => {
-    console.log("Inside get_bike_specification")
+    console.log("After", url)
     let used_var
     let colors_data = await scrap_common_model(url)
     const vehicle_information_id = vehicle_information
@@ -718,74 +716,89 @@ const get_bike_specification = async (url, vehicle_information, variant = 0, dat
     if ('specsTechnicalJson' in colors_data) {
         if ('specification' in colors_data.specsTechnicalJson) {
             for (const value of colors_data.specsTechnicalJson.specification) {
-                // console.log("value>>>>>>", value)
-                // const cheakidOfVarSpec = await VariantSpecification.findOne().select({ id: 1 }).sort({ id: -1 })
-                // const tokenidVarSpec = cheakidOfVarSpec !== 0 ? cheakidOfVarSpec?.id + 1 : 1
-                // const idOfVarSpec = tokenidVarSpec
+                const cheakidOfVarSpec = await VariantSpecification.findOne().select({ php_id: 1 }).sort({ php_id: -1 })
+                const tokenidVarSpec = cheakidOfVarSpec ? cheakidOfVarSpec?.php_id + 1 : 1
+                const idOfVarSpec = tokenidVarSpec
                 const spec_name = value.title ? value.title : "NA"
-                // let spec_id
-                const specExistAndUpdate = await VariantSpecification.findOneAndUpdate(
-                    { name: spec_name },
-                    { name: spec_name },
-                    { upsert: true, new: true }
-                );
+                let spec_id;
+                // Find if the VariantSpecification already exists by name
+                const specExistAndUpdate = await VariantSpecification.findOne({ name: spec_name });
 
-                const spec_id = specExistAndUpdate._id;
+                // Check if specExistAndUpdate is not null (i.e., it exists)
+                if (specExistAndUpdate) {
+                    //console.log("If it exists, use its _id")
+                    spec_id = specExistAndUpdate._id;
+                } else {
+                    VariantSpecification.findOneAndUpdate({ name: spec_name }, { php_id: idOfVarSpec, name: spec_name }, { upsert: true, new: true }).then(resss => {
+                        console.log("VariantSpecification Created")
+                        spec_id = resss._id;
+                    });
+                    // console.log("If it doesn't exist, create a new VariantSpecification and get its _id", newVariantSpec)
+                }
                 used_var = {
                     vehicle_information_id: vehicle_information_id,
                     variant_id: variant_id,
                     specification_id: spec_id
                 }
                 // console.log("const value of colors_data.specsTechnicalJson.specification")
-                for (const values of value.items) {
-                    let spec_name = values.text ? values.text : "NA";
-                    let spec_value = values.value ? values.value : "NA";
+                // let inc = 1
+                if (value.items) {
+                    // console.log("this is the first loop======" + i);
+                    var s = 0;
+                    for (const values of value.items) {
+                        let spec_name = values.text ? values.text : "NA";
+                        let spec_value = values.value ? values.value : "NA";
+                        let v_spe_exist = await VariantKey.findOne({ $and: [{ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { specification_id: spec_id }, { name: spec_name }] });
 
-                    let v_spe_exist = await VariantKey.findOne({ $and: [{ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { specification_id: spec_id }, { name: spec_name }] });
+                        const myPromise = new Promise(async (resolve, reject) => {
+                            try {
+                                // console.log("first", inc++)
+                                var cheakidOfVariantKey = await VariantKey.findOne().select({ php_id: 1 }).sort({ _id: -1 });
+                                resolve(cheakidOfVariantKey); // Resolve the promise with the unique ID
+                            } catch (error) {
+                                reject(error); // Reject the promise if there's an error
+                            }
+                        });
+                        myPromise.then(async (VariantKeyIdUnique) => {
 
-                    const myPromise = new Promise(async (resolve, reject) => {
-                        try {
-                            var cheakidOfVariantKey = await VariantKey.findOne().select({ php_id: 1 }).sort({ php_id: -1 });
-                            const tokenIdOfVariantKey = cheakidOfVariantKey ? cheakidOfVariantKey.php_id + 1 : 1;
-                            const VariantKeyIdUnique = tokenIdOfVariantKey;
-                            resolve(VariantKeyIdUnique); // Resolve the promise with the unique ID
-                        } catch (error) {
-                            reject(error); // Reject the promise if there's an error
-                        }
-                    });
+                            var tokenIdOfVariantKey = VariantKeyIdUnique ? VariantKeyIdUnique.php_id + 1 : 1;
+                            var phpIdOfVariantKey = tokenIdOfVariantKey;
+                            used_var.php_id = tokenIdOfVariantKey;
+                            used_var.name = spec_name;
+                            used_var.value = spec_value;
+                            used_var.show_overview = 0;
+                            used_var.variant_key_id = 0;
 
-                    myPromise.then(async (VariantKeyIdUnique) => {
-                        used_var.php_id = VariantKeyIdUnique;
-                        used_var.name = spec_name;
-                        used_var.value = spec_value;
-                        used_var.show_overview = 0;
-                        used_var.variant_key_id = 0;
+                            if (v_spe_exist) {
+                                let update = await VariantKey.findOneAndUpdate(
+                                    { $and: [{ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { specification_id: spec_id }, { name: spec_name }] },
+                                    used_var,
+                                    { new: true }
+                                );
+                            } else {
+                                VariantKey.create(used_var).then(resss => {
+                                    console.log("VariantKey variant createed>>>>")
+                                });
 
-                        if (v_spe_exist) {
-                            let update = await VariantKey.findOneAndUpdate(
-                                { $and: [{ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { specification_id: spec_id }, { name: spec_name }] },
-                                used_var,
-                                { new: true }
-                            );
-                        } else {
-                            let update = await VariantKey.create(used_var);
-                        }
-                    }).catch((error) => {
-                        console.error("Error:", error);
-                    });
+                            }
+                        }).catch((error) => {
+                            console.error("Error:", error);
+                        });
+                    }
                 }
+
             }
         }
         if ('keySpecs' in colors_data.specsTechnicalJson) {
-            // console.log("keySpecs")
+
             for (const valudata of colors_data.specsTechnicalJson.keySpecs) {
+
                 if (valudata.title.toLowerCase().includes("specifications")) {
                     var is_specification = 1
                     for (const valdatas of valudata.items) {
                         let u = await VariantKey.findOne({ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { name: valdatas.text })
                         if (u) {
-                            let u2 = await VariantKey.findOneAndUpdate({ _id: u._id }, { is_specification: is_specification }, { new: true })
-                            console.log("u2.>>>", u2)
+                            var u2 = await VariantKey.findOneAndUpdate({ _id: u._id }, { is_specification: is_specification }, { new: true })
                         }
                     }
                 }
@@ -796,7 +809,6 @@ const get_bike_specification = async (url, vehicle_information, variant = 0, dat
                         const u = await VariantKey.findOne({ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { name: valdatas.text })
                         if (u) {
                             let u2 = await VariantKey.findOneAndUpdate({ _id: u._id }, { is_feature: is_feature }, { new: true })
-                            console.log("u232.>>>", u2)
                         }
                     }
                 }

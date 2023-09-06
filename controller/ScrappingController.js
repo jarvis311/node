@@ -6,7 +6,7 @@ import TruckContrller from "../controller/TruckScrappingController.js"
 import ShipController from "../controller/ShipScrappingController.js"
 import AircraftContrller from "../controller/AircraftScrappingController.js"
 import con from "../connecttion/mysqlconn.js";
-
+// import Brand from "../Model/Brands.js"
 
 
 const get_brand = async (req, res) => {
@@ -30,6 +30,9 @@ const get_brand = async (req, res) => {
 const scrap_data = async (req, res) => {
     var input = req.body
     var brand = await Brands.findOne({ name: input.brand })
+
+    console.log(brand)
+
 
     // let queryData = con.query("SELECT * FROM `brands` WHERE `name`= " + `'${input.brand}'`, (err, result) => {
     //     brand = result[0]

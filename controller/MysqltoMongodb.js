@@ -1,5 +1,5 @@
 
-import con from "../connecttion/mysqlconn.js"
+// import con from "../connecttion/mysqlconn.js"
 import '../connecttion/conn.js'
 import bodytypes from "../Model/BodyType.js"
 import vehicle_model_color from "../Model/VehicleModelColor.js"

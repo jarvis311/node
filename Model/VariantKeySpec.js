@@ -3,7 +3,9 @@ import mongoose from "mongoose";
 var VariantKeySpec = new mongoose.Schema({
     php_id: {
         type: Number,
-        default: 0
+        default: 0,
+        unique: true, // Ensure uniqueness
+        index: true   // Create an index for better performance
     },
     vehicle_information_id: {
         type: mongoose.Schema.Types.ObjectId,
@@ -55,6 +57,19 @@ var VariantKeySpec = new mongoose.Schema({
     }
 }, { timestamps: true })
 
-var VariantKey = mongoose.model('VariantKey', VariantKeySpec)
+// var inc = 1
+// VariantKeySpec.pre('save', async function (next) {
+//     try {
+//         const maxPhpId = await this.constructor.findOne({}, { php_id: 1 }, { sort: { php_id: -1 } });
+//         console.log("saceedfjlsdjfsklh", inc++)
 
+//         // Increment php_id by 1
+//         this.php_id = maxPhpId ? maxPhpId.php_id + 1 : 1;
+//         next();
+//     } catch (error) {
+//         next(error);
+//     }
+// });
+
+var VariantKey = mongoose.model('VariantKey', VariantKeySpec)
 export default VariantKey 
