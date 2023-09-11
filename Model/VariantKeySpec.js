@@ -4,8 +4,9 @@ var VariantKeySpec = new mongoose.Schema({
     php_id: {
         type: Number,
         default: 0,
-        unique: true, // Ensure uniqueness
-        index: true   // Create an index for better performance
+    },
+    nameCounter: {
+        type: String,
     },
     vehicle_information_id: {
         type: mongoose.Schema.Types.ObjectId,

@@ -1,3 +1,4 @@
+
 import cheerio from "cheerio";
 import axios from "axios";
 import Bodytypes from '../Model/BodyType.js'
@@ -733,31 +734,13 @@ const get_bike_specification = async (url, vehicle_information, priceVariant = 0
     await processTechnicalSpecs(colors_data, vehicle_information_id, variant_id)
 }
 
-async function getNextVariantKeyPhpId() {
-    // const counterDoc = await Counter.findOneAndUpdate(
-    //     { _id: "variant_key_php_id" },
-    //     { $inc: { php_id: 1 } },
-    //     { upsert: true, new: true }
-    // );
 
-    // return counterDoc.php_id;
-
-    const result = await VariantKey.aggregate([
-        { $group: { _id: null, maxPhpId: { $max: "$php_id" } } },
-        { $project: { _id: 0, maxPhpId: 1 } },
-    ]);
-
-    const maxPhpId = result.length > 0 ? result[0].maxPhpId : 0;
-    const nextPhpId = maxPhpId + 1;
-
-    return nextPhpId;
-}
 async function processTechnicalSpecs(colors_data, vehicle_information_id, variant_id) {
     let used_var
     if ('specsTechnicalJson' in colors_data) {
         if ('specification' in colors_data.specsTechnicalJson) {
+            console.log("colors_data.specsTechnicalJson>>>", colors_data.specsTechnicalJson);
             const specificationPromises = [];
-
 
             for (const value of colors_data.specsTechnicalJson.specification) {
                 const spec_name = value.title ? value.title : "NA";
@@ -788,8 +771,7 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
 
                 specificationPromises.push(
                     Promise.all(
-                        value.items.map(async (values, index) => {
-                            let php_id = await getNextVariantKeyPhpId()
+                        value.items.map(async (values) => {
                             let spec_name = values.text ? values.text : "NA";
                             let spec_value = values.value ? values.value : "NA";
                             let v_spe_exist = await VariantKey.findOne({
@@ -801,9 +783,11 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
                                 ],
                             });
 
+                            const cheakidOfVariantKey = await VariantKey.findOne().select({ php_id: 1 }).sort({ php_id: -1 });
+                            const tokenIdOfVariantKey = cheakidOfVariantKey ? cheakidOfVariantKey.php_id + 1 : 1;
+                            const VariantKeyIdUnique = tokenIdOfVariantKey;
 
-
-                            used_var.php_id = php_id;
+                            used_var.php_id = VariantKeyIdUnique;
                             used_var.name = spec_name;
                             used_var.value = spec_value;
                             used_var.show_overview = 0;
