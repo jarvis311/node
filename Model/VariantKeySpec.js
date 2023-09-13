@@ -5,9 +5,6 @@ var VariantKeySpec = new mongoose.Schema({
         type: Number,
         default: 0,
     },
-    nameCounter: {
-        type: String,
-    },
     vehicle_information_id: {
         type: mongoose.Schema.Types.ObjectId,
         default: 0
@@ -19,6 +16,15 @@ var VariantKeySpec = new mongoose.Schema({
     specification_id: {
         type: mongoose.Schema.Types.ObjectId,
         default: 0,
+    },
+    php_vehicle_information_id: {
+        type: Number,
+    },
+    php_variant_id: {
+        type: Number,
+    },
+    php_specification_id: {
+        type: Number,
     },
     name: {
         type: String,

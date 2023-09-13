@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 var vehicle_model_colorSchema = new mongoose.Schema({
     php_id: Number,
     vehicle_information_id: mongoose.Schema.Types.ObjectId,
+    php_vehicle_information_id: Number,
     color_name: {
         type: String,
         default: "NA"

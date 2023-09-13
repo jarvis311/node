@@ -4,6 +4,9 @@ import mongoose from "mongoose";
 var PriceVariant_schema = new mongoose.Schema({
     php_id: Number,
     vehicle_information_id: mongoose.Schema.Types.ObjectId,
+    php_vehicle_information_id: {
+        type: Number,
+    },
     name: String,
     link: {
         type: String,

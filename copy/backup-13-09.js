@@ -1,4 +1,3 @@
-
 import cheerio from "cheerio";
 import axios from "axios";
 import Bodytypes from '../Model/BodyType.js'
@@ -25,9 +24,9 @@ const scrap_bike = async (input, brand) => {
         var brand = brand
         var brand_id = brand._id
         let brand_php_id = brand.id
-        // const findCategoryId = await CategoryModel.findOne({ id: input.category })
-        // let category_id = findCategoryId._id
-        // let category_php_id = findCategoryId.id
+        const findCategoryId = await CategoryModel.findOne({ id: input.category })
+        let category_id = findCategoryId._id
+        let category_php_id = findCategoryId.id
 
         if (input.scrap_type == "brand") {
             var new_bike_url = "https://www.bikedekho.com/" + brand.name + "-bikes"
@@ -46,7 +45,6 @@ const scrap_bike = async (input, brand) => {
         // dd("sdhasfjkl>>>", data_res_arr.items)
         if ('items' in data_res_arr) {
             for (const val of data_res_arr.items) {
-                // console.log("val>>>>>", val)
                 brand_id = brand._id
                 const model_name = val.modelName ? val.modelName : "NA"
                 const fuel_type = val.fuelType ? val.fuelType : "NA"
@@ -248,13 +246,21 @@ const scrap_bike = async (input, brand) => {
 
 
                 if (bike_exist) {
-                    var bike_data = await vehicle_information.findOneAndUpdate({ $and: [{ brand_id: brand_id }, { model_name: model_name }] }, brandobj, { new: true })
-                    let d = await get_other_details(model_url, images_url, brandobj, bike_exist._id)
+                    const updatedBike = await vehicle_information.findOneAndUpdate(
+                        { $and: [{ brand_id: brand_id }, { model_name: model_name }] },
+                        brandobj,
+                        { new: true }
+                    );
+                    await get_other_details(model_url, images_url, brandobj, bike_exist._id)
                     // console.log("bike_exist")
                 } else {
-                    let craete = await vehicle_information.create(brandobj)
-                    // console.log("bike_exist craete", craete)
-                    await get_other_details(model_url, images_url, brandobj, craete._id, craete.php_id)
+                    try {
+                        const createdBike = await vehicle_information.create(brandobj);
+                        get_other_details(model_url, images_url, brandobj, createdBike._id);
+                        // The code will continue here after get_other_details is completed.
+                    } catch (error) {
+                        console.error("Error:", error);
+                    }
                 }
             }
             return (await helper.dataResponse('Vehicle Successfully Scrapped.'))
@@ -489,11 +495,9 @@ const get_specific_bike = async (link, input1, brand) => {
                     return bike_exist._id;
 
                 } else {
-                    // const qr = ("INSERT INTO vehicle_information( brand_id, category_id, bodytype_id, model_name, fuel_type, avg_rating, review_count, variant_name, min_price, max_price, image, status, launched_at, Launch_date, model_popularity, mileage, engine, style_type, max_power, showroom_price, rto_price, insurance_price, other_price, is_content_writer, on_road_price, is_popular_search, is_upcoming, is_latest, link )") + ' VALUES ' + (`(${brand_id}, ${category_id},${bodytype_id},'${model_name}','${fuel_type}',${avg_rating},${review_count},'${variant_name}',${min_price},${max_price},'${image}','${status}','${launched_at}','${Launch_date}',${model_popularity},${mileage},${engine},'${style_type}','${max_power}',${showroom_price},${rto_price},${insurance_price},${other_price},${is_content_writer},${on_road_price},${is_popular_search},${is_upcoming},${is_latest},'${link}')`)
-                    var responseOfCreate = await vehicle_information.create(dataObj)
-                    // let craete = await con.query(qr)
-                    await get_other_details(model_url, images_url, dataObj, responseOfCreate._id, responseOfCreate.php_id)
 
+                    var responseOfCreate = await vehicle_information.create(dataObj)
+                    await get_other_details(model_url, images_url, dataObj, responseOfCreate._id)
                     return responseOfCreate._id;
 
                 }
@@ -529,12 +533,10 @@ const get_string_between = (string, start, end) => {
 
 }
 
-const get_other_details = async (url, images_url, dataObj, model_id, php_vehicle_information_id) => {
+const get_other_details = async (url, images_url, dataObj, model_id) => {
     var row
     var key
     var temp
-    console.log(php_vehicle_information_id)
-    // dd(php_vehicle_information_id)
     await axios.get(url).then(async (res) => {
         var $ = cheerio.load(res.data)
         /*Bike highlight*/
@@ -566,7 +568,6 @@ const get_other_details = async (url, images_url, dataObj, model_id, php_vehicle
         // const qr = ("UPDATE " + `vehicle_information` + " SET " + `price_desc = '${price_desc}', highlights_desc = '${highlights_desc.replaceAll("'s", "")}', key_specs = '${key_specs}' WHERE id = ${model_id}`)
         // const qr = `UPDATE vehicle_information SET price_desc = ?, highlights_desc = ?, key_specs = ? WHERE id = ?`
         // const update = await con.query(qr, [price_desc, highlights_desc.replaceAll("'s", ""), key_specs, model_id]).then(res => { }).catch(err => console.log('err>>>>>>>>>', err))
-
         var colors_data = await scrap_common_model(images_url)
         var colors_data_arr = colors_data.SideBarColors
 
@@ -589,7 +590,6 @@ const get_other_details = async (url, images_url, dataObj, model_id, php_vehicle
                 let input_color = {
                     php_id: php_id,
                     vehicle_information_id: model_id,
-                    php_vehicle_information_id: php_vehicle_information_id,
                     color_name: val.name,
                     color_code: val.hexCode,
                     image: image
@@ -671,7 +671,6 @@ const get_other_details = async (url, images_url, dataObj, model_id, php_vehicle
             let dataobje = {
                 php_id: php_id,
                 vehicle_information_id: vehicle_information_id,
-                php_vehicle_information_id: php_vehicle_information_id,
                 name: name,
                 link: link,
                 engine: engine,
@@ -694,7 +693,7 @@ const get_other_details = async (url, images_url, dataObj, model_id, php_vehicle
             if (exist) {
                 await PriceVariant.findOneAndUpdate({ $and: [{ vehicle_information_id: model_id }, { name: model_name }] }, dataobje, { new: true });
             } else {
-                await insertPriceVariantAndFetchSpecification(dataobje, link, model_id, php_vehicle_information_id);
+                await insertPriceVariantAndFetchSpecification(dataobje, link, model_id);
             }
 
             // let exist = await PriceVariant.findOne({ $and: [{ vehicle_information_id: model_id }, { name: model_name }] })
@@ -713,93 +712,85 @@ const get_other_details = async (url, images_url, dataObj, model_id, php_vehicle
 }
 
 //Sumit Patel :- 11-09-2023 Start
-async function insertPriceVariantAndFetchSpecification(dataobje, link, model_id, php_vehicle_information_id) {
+async function insertPriceVariantAndFetchSpecification(dataobje, link, model_id) {
     try {
         const createId = await PriceVariant.create(dataobje);
-        console.log("Price variant created");
+        if (createId) {
+            console.log("Price variant created")
+            await get_bike_specification(link, model_id, createId._id, dataobje);
 
-        await get_bike_specification(link, model_id, createId._id, dataobje, php_vehicle_information_id, createId.php_id);
-        // dd(get_bike_specification)
-        console.log("Specification fetched for the PriceVariant");
-
+        }
     } catch (error) {
+        dd(error);
         console.error("Error:", error);
     }
 }
 //Sumit Patel :- 11-09-2023 End
-const get_bike_specification = async (url, vehicle_information, priceVariant = 0, dataobje, php_vehicle_information_id, php_variant_id) => {
-    try {
-        console.log("After", url)
+const get_bike_specification = async (url, vehicle_information, priceVariant = 0, dataobje,) => {
+    console.log("After", url)
 
-        let colors_data = await scrap_common_model(url)
+    let colors_data = await scrap_common_model(url)
 
-        const vehicle_information_id = vehicle_information
-        const variant_id = priceVariant
-        await processTechnicalSpecs(colors_data, vehicle_information_id, variant_id, php_vehicle_information_id, php_variant_id)
-    } catch (error) {
-        console.log(error)
-    }
-
+    const vehicle_information_id = vehicle_information
+    const variant_id = priceVariant
+    await processTechnicalSpecs(colors_data, vehicle_information_id, variant_id)
 }
+// const counterDoc = await Counter.findOneAndUpdate(
+//     { _id: "variant_key_php_id" },
+//     { $inc: { php_id: 1 } },
+//     { upsert: true, new: true }
+// );
 
-function findVariantSpecificationByName(spec_name) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const spec_exist = await VariantSpecification.findOne({ name: spec_name });
-            resolve(spec_exist);
-        } catch (error) {
-            reject(error);
-        }
-    });
+// return counterDoc.php_id;
+async function getNextVariantKeyPhpId() {
+
+    // const aggregationResult = await VariantKey.findOne(
+    //     { $inc: { php_id: 1 } },
+    //     { upsert: true, new: true }
+    // );
+
+    return 1;
 }
+async function processTechnicalSpecs(colors_data, vehicle_information_id, variant_id) {
+    let used_var
+    if ('specsTechnicalJson' in colors_data) {
+        if ('specification' in colors_data.specsTechnicalJson) {
+            const specificationPromises = [];
+            for (const value of colors_data.specsTechnicalJson.specification) {
+                const spec_name = value.title ? value.title : "NA";
 
-async function processTechnicalSpecs(colors_data, vehicle_information_id, variant_id, php_vehicle_information_id, php_variant_id) {
-    try {
-        let used_var
-        var usedInc = 0;
-        if ('specsTechnicalJson' in colors_data) {
-            if ('specification' in colors_data.specsTechnicalJson) {
+                const cheakVariantSpecificationId = await VariantSpecification.findOne().select({ php_id: 1 }).sort({ php_id: -1 });
+                const tokenIdOfVariantSpec = cheakVariantSpecificationId ? cheakVariantSpecificationId.php_id + 1 : 1;
+                const idOfVarSpec = tokenIdOfVariantSpec;
 
-                // const specifications = colors_data.specsTechnicalJson.specification;
+                const varobj = {
+                    php_id: idOfVarSpec,
+                    name: spec_name,
+                };
 
-                for (const value of colors_data.specsTechnicalJson.specification) {
-                    const spec_name = value.title ? value.title : "NA";
-                    let php_specification_id
-                    let spec_exist = await VariantSpecification.findOne({ name: spec_name });
-                    let spec_id;
-                    if (spec_exist) {
-                        spec_id = spec_exist._id;
-                    } else {
-                        let cheakVariantSpecificationId = await VariantSpecification.findOne().select({ php_id: 1 }).sort({ php_id: -1 });
-                        let tokenIdOfVariantSpec = cheakVariantSpecificationId ? cheakVariantSpecificationId.php_id + 1 : 1;
-                        let idOfVarSpec = tokenIdOfVariantSpec;
+                let spec_exist = await VariantSpecification.findOne({ name: spec_name });
+                let spec_id;
 
-                        const varobj = {
-                            php_id: idOfVarSpec,
-                            name: spec_name,
-                        };
-                        const create = await VariantSpecification.create(varobj);
-                        spec_id = create._id;
-                        php_specification_id = create.php_id;
-                    }
-                    usedInc++;
+                if (spec_exist) {
+                    spec_id = spec_exist._id;
+                } else {
+                    const create = await VariantSpecification.create(varobj);
+                    spec_id = create._id;
+                }
 
-                    used_var = {
-                        vehicle_information_id: vehicle_information_id,
-                        variant_id: variant_id,
-                        specification_id: spec_id,
-                        php_vehicle_information_id: php_vehicle_information_id,
-                        php_variant_id: php_variant_id,
-                        php_specification_id: php_specification_id
+                used_var = {
+                    vehicle_information_id: vehicle_information_id,
+                    variant_id: variant_id,
+                    specification_id: spec_id,
+                };
 
-                    };
 
-                    async function processItems() {
-                        for (const item of value.items) {
-                            // Perform your desired action for each item here
-                            console.log(vehicle_information_id, variant_id, spec_id);
-                            let spec_name = item.text ? item.text : "NA";
-                            let spec_value = item.value ? item.value : "NA";
+                specificationPromises.push(
+                    Promise.all(
+                        value.items.map(async (values, index) => {
+                            let php_id = await getNextVariantKeyPhpId()
+                            let spec_name = values.text ? values.text : "NA";
+                            let spec_value = values.value ? values.value : "NA";
                             let v_spe_exist = await VariantKey.findOne({
                                 $and: [
                                     { vehicle_information_id: vehicle_information_id },
@@ -809,57 +800,74 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
                                 ],
                             });
 
+
+
+                            used_var.php_id = php_id;
                             used_var.name = spec_name;
                             used_var.value = spec_value;
+                            used_var.show_overview = 0;
+                            used_var.variant_key_id = 0;
 
                             if (v_spe_exist) {
-                                console.log('if')
-                            }
-                            else {
-                                const cheakidOfVariantKey = await VariantKey.findOne().select({ php_id: 1 }).sort({ php_id: -1 });
-                                const tokenIdOfVariantKey = await (cheakidOfVariantKey ? cheakidOfVariantKey.php_id + 1 : 1);
-                                used_var.php_id = tokenIdOfVariantKey;
-                                console.log(tokenIdOfVariantKey);
-                                await VariantKey.create(used_var)
-                                console.log('else')
+                                if (spec_name == 'Motor Power') {
+                                    used_var.show_overview = 1;
+                                    used_var.variant_key_id = 32;
+                                }
+                                // ... (other conditions)
 
+                                var update = await VariantKey.findOneAndUpdate(
+                                    {
+                                        $and: [
+                                            { vehicle_information_id: vehicle_information_id },
+                                            { variant_id: variant_id },
+                                            { specification_id: spec_id },
+                                            { name: spec_name },
+                                        ],
+                                    },
+                                    used_var,
+                                    { new: true }
+                                );
+                            } else {
+                                // ... (other conditions)
+                                // 
+                                let update = await VariantKey.create(used_var);
+                                if (update) {
+                                    console.log("Variant Created!!")
+                                }
                             }
-                            console.log(`Spec Name: ${spec_name}, Spec Value: ${spec_value}`);
-                        }
-                    }
-                    // Call the function to process items sequentially
-                    await processItems();
-                }
+                        })
+                    )
+                );
             }
-            if ('keySpecs' in colors_data.specsTechnicalJson) {
-                colors_data.specsTechnicalJson.keySpecs.map((valudata) => {
-                    if (valudata.title.toLowerCase().includes("specifications")) {
-                        var is_specification = 1;
-                        let i = valudata.items.map(async (valdatas) => {
-                            let u = await VariantKey.findOne({ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { name: valdatas.text });
-                            if (u) {
-                                var u2 = await VariantKey.findOneAndUpdate({ id: u.id }, { is_specification: is_specification }, { new: true });
-                            }
-                        });
-                    }
-                    if (valudata.title.toLowerCase().includes("Features")) {
-                        let is_feature = 1;
-                        let i = valudata.items.map(async (valdatas) => {
-                            const u = await VariantKey.findOne({ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { name: valdatas.text });
-                            if (u) {
-                                // const updateQr = ("UPDATE " + `variant_key_specs ` + "SET " + `is_feature = ${is_feature} WHERE id = ${u.id} `)
-                                // const updateVar = await con.query(updateQr)
-                                let u2 = await VariantKey.findOneAndUpdate({ id: u.id }, { is_feature: is_feature }, { new: true });
-                            }
-                        });
-                    }
-                });
-            }
+
+            await Promise.all(specificationPromises);
         }
-    } catch (error) {
-        console.log(error)
-    }
 
+        if ('keySpecs' in colors_data.specsTechnicalJson) {
+            colors_data.specsTechnicalJson.keySpecs.map((valudata) => {
+                if (valudata.title.toLowerCase().includes("specifications")) {
+                    var is_specification = 1
+                    let i = valudata.items.map(async (valdatas) => {
+                        let u = await VariantKey.findOne({ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { name: valdatas.text })
+                        if (u) {
+                            var u2 = await VariantKey.findOneAndUpdate({ id: u.id }, { is_specification: is_specification }, { new: true })
+                        }
+                    })
+                }
+                if (valudata.title.toLowerCase().includes("Features")) {
+                    let is_feature = 1
+                    let i = valudata.items.map(async (valdatas) => {
+                        const u = await VariantKey.findOne({ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { name: valdatas.text })
+                        if (u) {
+                            // const updateQr = ("UPDATE " + `variant_key_specs ` + "SET " + `is_feature = ${is_feature} WHERE id = ${u.id} `)
+                            // const updateVar = await con.query(updateQr)
+                            let u2 = await VariantKey.findOneAndUpdate({ id: u.id }, { is_feature: is_feature }, { new: true })
+                        }
+                    })
+                }
+            })
+        }
+    }
 }
 
 // Example usage:
