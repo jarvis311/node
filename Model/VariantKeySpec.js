@@ -46,8 +46,8 @@ var VariantKeySpec = new mongoose.Schema({
         default: 0
     },
     variant_key_id: {
-        type: Number,
-        // type: mongoose.Schema.Types.ObjectId,
+        // type: Number,
+        type: mongoose.Schema.Types.ObjectId,
         default: 0
     },
     php_variant_key_id: {

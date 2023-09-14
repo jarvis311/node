@@ -14,6 +14,7 @@ const keyspecificationationSchema = new mongoose.Schema({
     },
     icon: {
         type: String,
+        default:null
     },
     deleted_by: {
         type: Number,

@@ -558,20 +558,21 @@ async function get_other_details(url, images_url, dataObj, model_id, php_vehicle
     var temp
     // dd(php_vehicle_information_id)
     await axios.get(url).then(async (res) => {
-        var $ = cheerio.load(res.data)
+        let $ = cheerio?.load(res.data)
+        // console.log("$",$)
         /*Bike highlight*/
-        $('div[id="model-highlight"]').each((index, node) => {
-            var dd = $(strip_tags(node)).html()
-            row = dd.replace('\r\n', '')
+        $('div[id="model-highlight"]')?.each((index, node) => {
+            var dd = $(strip_tags(node))?.html()
+            row = dd?.replace('\r\n', '')
         })
 
         /*Key specs*/
-        $('table[class="gsc_row quickOverview"] tbody tr td').each((index, nod) => {
+        $('table[class="gsc_row quickOverview"] tbody tr td')?.each((index, nod) => {
             key = $(strip_tags(nod)).html()
         })
 
-        var price_description = $('p[id="model-highlight"]').each((ind, nodee) => {
-            temp = $(nodee).text();
+        var price_description = $('p[id="model-highlight"]')?.each((ind, nodee) => {
+            temp = $(nodee)?.text();
         })
         const price_desc = temp ? temp : "NA"
         const highlights_desc = row ? row : "NA"
@@ -590,7 +591,7 @@ async function get_other_details(url, images_url, dataObj, model_id, php_vehicle
         // const update = await con.query(qr, [price_desc, highlights_desc.replaceAll("'s", ""), key_specs, model_id]).then(res => { }).catch(err => console.log('err>>>>>>>>>', err))
 
         var colors_data = await scrap_common_model(images_url)
-        var colors_data_arr = colors_data.SideBarColors
+        var colors_data_arr = colors_data?.SideBarColors
 
 
 
@@ -616,9 +617,9 @@ async function get_other_details(url, images_url, dataObj, model_id, php_vehicle
                     color_code: val.hexCode,
                     image: image
                 }
-                let exist = await vehicle_model_color.find({ $and: [{ vehicle_information_id: model_id }, { color_code: val.hexCode }] }).count()
+                let exist = await vehicle_model_color.findOne({ $and: [{ vehicle_information_id: model_id }, { color_code: val.hexCode }] }).count()
                 if (exist) {
-                    var res = await vehicle_model_color.find({ $and: [{ vehicle_information_id: model_id }, { color_code: val.hexCode }] }, input_color, { new: true })
+                    var res = await vehicle_model_color.findOneAndUpdate({ $and: [{ vehicle_information_id: model_id }, { color_code: val.hexCode }] }, input_color, { new: true })
                 } else {
                     res = await vehicle_model_color.create(input_color)
                 }
@@ -628,10 +629,10 @@ async function get_other_details(url, images_url, dataObj, model_id, php_vehicle
     })
 
     //All price variant
-    await axios.get(url).then(async (responsed) => {
-        var $ = cheerio.load(responsed.data)
-        const tableRows = $(responsed.data).find('table[class="allvariant contentHold"] tbody tr')
-
+   const responsed= await axios.get(url)
+        var $ = cheerio?.load(responsed.data)
+        const tableRows = $(responsed.data)?.find('table[class="allvariant contentHold"] tbody tr')
+        if(tableRows){   
         for (const node of tableRows) {
             let model_link
             let model_name
@@ -716,7 +717,8 @@ async function get_other_details(url, images_url, dataObj, model_id, php_vehicle
             }
 
         }
-    })
+    }
+    
 }
 
 //Sumit Patel :- 11-09-2023 Start
@@ -828,64 +830,98 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
                                 const cheakidOfVariantKey = await VariantKey.findOne().select({ php_id: 1 }).sort({ php_id: -1 });
                                 const tokenIdOfVariantKey = await (cheakidOfVariantKey ? cheakidOfVariantKey.php_id + 1 : 1);
                                 used_var.php_id = tokenIdOfVariantKey;
-                                const specMappings = {
-                                    'Displacement': { show_overview: 1, variant_key_id: 1, newName: 'Engine' },
-                                    'Peak Power': { show_overview: 1, variant_key_id: 2, newName: 'Power' },
-                                    'Max Torque': { show_overview: 1, variant_key_id: 3, newName: 'Torque' },
-                                    'Mileage': { show_overview: 1, variant_key_id: 4 },
-                                    'Brakes Rear': { show_overview: 1, variant_key_id: 5, newName: 'Brakes' },
-                                    'Wheels Type': { show_overview: 1, variant_key_id: 6, newName: 'Tyre Type' },
-                                    'Fuel Type': { show_overview: 0, variant_key_id: 7 },
-                                    'BHP': { show_overview: 0, variant_key_id: 8 },
-                                    'City Mileage': { show_overview: 0, variant_key_id: 9 },
-                                    'Transmission Type': { show_overview: 0, variant_key_id: 10 },
-                                    'Max Power': { show_overview: 0, variant_key_id: 11 },
-                                    'Displacement': { show_overview: 0, variant_key_id: 12 },
-                                    'Max Torque': { show_overview: 0, variant_key_id: 13 },
-                                    'GVW': { show_overview: 0, variant_key_id: 14 },
-                                    'Max Speed': { show_overview: 0, variant_key_id: 15 },
-                                    'Number of Tyre': { show_overview: 0, variant_key_id: 16 },
-                                    'Fuel Tank': { show_overview: 0, variant_key_id: 17 },
-                                    'Number of Cylinder': { show_overview: 0, variant_key_id: 18 },
-                                    'Gear Box': { show_overview: 0, variant_key_id: 19 },
-                                    'Capacity CC': { show_overview: 0, variant_key_id: 20 },
-                                    'Top Speed': { show_overview: 0, variant_key_id: 21 },
-                                    'Range': { show_overview: 0, variant_key_id: 22 },
-                                    'Cruise speed': { show_overview: 0, variant_key_id: 23 },
-                                    'Guests': { show_overview: 0, variant_key_id: 24 },
-                                    'Guest Cabin': { show_overview: 0, variant_key_id: 25 },
-                                    'Crew': { show_overview: 0, variant_key_id: 26 },
-                                    'Travel range': { show_overview: 0, variant_key_id: 27 },
-                                    'Max Take Off Weight': { show_overview: 0, variant_key_id: 28 },
-                                    'Fuel Tank capacity': { show_overview: 0, variant_key_id: 29 },
-                                    'Body Type': { show_overview: 0, variant_key_id: 30 },
-                                    'Driving Range': { show_overview: 0, variant_key_id: 31 },
-                                    'Motor Power': { show_overview: 1, variant_key_id: 32 },
-                                    'Battery Charging Time': { show_overview: 0, variant_key_id: 33 },
-                                    'Motor Type': { show_overview: 0, variant_key_id: 34 },
-                                    'Battery Capacity': { show_overview: 0, variant_key_id: 35 },
-                                    'Cylinders': { show_overview: 1, variant_key_id: 38 },
-                                    'Seats': { show_overview: 0, variant_key_id: 39 },
-                                    'Service Cost': { show_overview: 0, variant_key_id: 40 },
-                                    'Boot Space': { show_overview: 0, variant_key_id: 41 },
-                                    'Airbags': { show_overview: 0, variant_key_id: 42 },
-                                    'Drive Type': { show_overview: 0, variant_key_id: 43 },
-                                    'Payload': { show_overview: 0, variant_key_id: 44 },
-                                    'ABS': { show_overview: 0, variant_key_id: 45 },
-                                    'Battery Warranty': { show_overview: 0, variant_key_id: 46 },
-                                    'Cooling System': { show_overview: 0, variant_key_id: 47 },
-                                    'Kerb Weight': { show_overview: 1, variant_key_id: 48 }
-                                };
-                                // Assuming spec_name is one of the keys in specMappings
-                                if (specMappings.hasOwnProperty(spec_name)) {
-                                    const mapping = specMappings[spec_name];
-                                    used_var.show_overview = mapping.show_overview;
-                                    used_var.variant_key_id = mapping.variant_key_id;
-                                    spec_name = mapping.newName || spec_name;
+
+                                // const specMappings = {
+                                //     'Displacement': { show_overview: 1, variant_key_id: 1, newName: 'Engine' },
+                                //     'Peak Power': { show_overview: 1, variant_key_id: 2, newName: 'Power' },
+                                //     'Max Torque': { show_overview: 1, variant_key_id: 3, newName: 'Torque' },
+                                //     'Mileage': { show_overview: 1, variant_key_id: 4 },
+                                //     'Brakes Rear': { show_overview: 1, variant_key_id: 5, newName: 'Brakes' },
+                                //     'Wheels Type': { show_overview: 1, variant_key_id: 6, newName: 'Tyre Type' },
+                                //     'Fuel Type': { show_overview: 0, variant_key_id: 7 },
+                                //     'BHP': { show_overview: 0, variant_key_id: 8 },
+                                //     'City Mileage': { show_overview: 0, variant_key_id: 9 },
+                                //     'Transmission Type': { show_overview: 0, variant_key_id: 10 },
+                                //     'Max Power': { show_overview: 0, variant_key_id: 11 },
+                                //     'Displacement': { show_overview: 0, variant_key_id: 12 },
+                                //     'Max Torque': { show_overview: 0, variant_key_id: 13 },
+                                //     'GVW': { show_overview: 0, variant_key_id: 14 },
+                                //     'Max Speed': { show_overview: 0, variant_key_id: 15 },
+                                //     'Number of Tyre': { show_overview: 0, variant_key_id: 16 },
+                                //     'Fuel Tank': { show_overview: 0, variant_key_id: 17 },
+                                //     'Number of Cylinder': { show_overview: 0, variant_key_id: 18 },
+                                //     'Gear Box': { show_overview: 0, variant_key_id: 19 },
+                                //     'Capacity CC': { show_overview: 0, variant_key_id: 20 },
+                                //     'Top Speed': { show_overview: 0, variant_key_id: 21 },
+                                //     'Range': { show_overview: 0, variant_key_id: 22 },
+                                //     'Cruise speed': { show_overview: 0, variant_key_id: 23 },
+                                //     'Guests': { show_overview: 0, variant_key_id: 24 },
+                                //     'Guest Cabin': { show_overview: 0, variant_key_id: 25 },
+                                //     'Crew': { show_overview: 0, variant_key_id: 26 },
+                                //     'Travel range': { show_overview: 0, variant_key_id: 27 },
+                                //     'Max Take Off Weight': { show_overview: 0, variant_key_id: 28 },
+                                //     'Fuel Tank capacity': { show_overview: 0, variant_key_id: 29 },
+                                //     'Body Type': { show_overview: 0, variant_key_id: 30 },
+                                //     'Driving Range': { show_overview: 0, variant_key_id: 31 },
+                                //     'Motor Power': { show_overview: 1, variant_key_id: 32 },
+                                //     'Battery Charging Time': { show_overview: 0, variant_key_id: 33 },
+                                //     'Motor Type': { show_overview: 0, variant_key_id: 34 },
+                                //     'Battery Capacity': { show_overview: 0, variant_key_id: 35 },
+                                //     'Cylinders': { show_overview: 1, variant_key_id: 38 },
+                                //     'Seats': { show_overview: 0, variant_key_id: 39 },
+                                //     'Service Cost': { show_overview: 0, variant_key_id: 40 },
+                                //     'Boot Space': { show_overview: 0, variant_key_id: 41 },
+                                //     'Airbags': { show_overview: 0, variant_key_id: 42 },
+                                //     'Drive Type': { show_overview: 0, variant_key_id: 43 },
+                                //     'Payload': { show_overview: 0, variant_key_id: 44 },
+                                //     'ABS': { show_overview: 0, variant_key_id: 45 },
+                                //     'Battery Warranty': { show_overview: 0, variant_key_id: 46 },
+                                //     'Cooling System': { show_overview: 0, variant_key_id: 47 },
+                                //     'Kerb Weight': { show_overview: 1, variant_key_id: 48 }
+                                // };
+                                // // Assuming spec_name is one of the keys in specMappings
+                                // if (specMappings.hasOwnProperty(spec_name)) {
+                                //     const mapping = specMappings[spec_name];
+                                //     used_var.show_overview = mapping.show_overview;
+                                //     used_var.variant_key_id = mapping.variant_key_id;
+                                //     spec_name = mapping.newName || spec_name;
+                                // } else {
+                                //     used_var.show_overview = 0;
+                                //     used_var.variant_key_id = 0; // Set the default value here if needed
+                                // }
+
+                                const cheakidOfKeySpec = await keyspecification.findOne().select({ id: 1 }).sort({ id: -1 });
+                                const tokenIdOfKeySpec = await (cheakidOfKeySpec ? cheakidOfKeySpec.id + 1 : 1);
+                                // used_var.id = tokenIdOfKeySpec;
+                                console.log("tokenIdOfKeySpec>>>",tokenIdOfKeySpec)
+
+                                // const findOrUpdateKeySpesificationn = await keyspecification.findOneAndUpdate({name:spec_name},{name:spec_name,id:tokenIdOfKeySpec},{upsert:true,new:true})
+                                const findOrUpdateKeySpesificationn = await keyspecification.findOne({name:spec_name})
+                                if(findOrUpdateKeySpesificationn){
+                                    used_var.variant_key_id = findOrUpdateKeySpesificationn._id;
+                                    used_var.php_variant_key_id = findOrUpdateKeySpesificationn.id;
+                                }else{
+                                    const createKeySpece = await keyspecification.create({name:spec_name, id:tokenIdOfKeySpec})
+                                    used_var.variant_key_id = createKeySpece._id;
+                                    used_var.php_variant_key_id = createKeySpece.id;
+                                }
+                                console.log("findOrUpdateKeySpesificationn>>",findOrUpdateKeySpesificationn)
+                                if (
+                                    spec_name == "Displacement" ||
+                                    spec_name == "Peak Power" ||
+                                    spec_name == "Max Torque" ||
+                                    spec_name == "Mileage" ||
+                                    spec_name == "Brakes Rear" ||
+                                    spec_name == "Wheels Type" ||
+                                    spec_name == "Motor Power" ||
+                                    spec_name == "Cylinders" ||
+                                    spec_name == "Kerb Weight"
+                                ) {
+                                    used_var.show_overview = 1;
                                 } else {
                                     used_var.show_overview = 0;
-                                    used_var.variant_key_id = 0; // Set the default value here if needed
                                 }
+                                
                                 // console.log(tokenIdOfVariantKey);
                                 used_var.name = spec_name;
                                 used_var.value = spec_value;
