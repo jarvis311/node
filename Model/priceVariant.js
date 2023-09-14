@@ -87,7 +87,7 @@ var PriceVariant_schema = new mongoose.Schema({
 }, { timestamps: true })
 
 
-const PriceVariant = mongoose.model('PriceVariant', PriceVariant_schema)
+const PriceVariant = mongoose.model('vehicle_price_variant', PriceVariant_schema)
 
 
 export default PriceVariant

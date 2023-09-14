@@ -7,6 +7,6 @@ const VariantSpecificationSchema = new mongoose.Schema({
     },
     name: String
 })
-var VariantSpecification = mongoose.model('VariantSpecification', VariantSpecificationSchema)
+var VariantSpecification = mongoose.model('Variant_specifications', VariantSpecificationSchema)
 
 export default VariantSpecification

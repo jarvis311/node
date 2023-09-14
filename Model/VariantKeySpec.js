@@ -5,6 +5,9 @@ var VariantKeySpec = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    // varint_mongo_id: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    // },
     vehicle_information_id: {
         type: mongoose.Schema.Types.ObjectId,
         default: 0
@@ -44,8 +47,14 @@ var VariantKeySpec = new mongoose.Schema({
     },
     variant_key_id: {
         type: Number,
+        // type: mongoose.Schema.Types.ObjectId,
         default: 0
     },
+    php_variant_key_id: {
+        type: Number,
+        default: 0
+    },
+
     is_update: {
         type: Number,
         default: 0
@@ -78,5 +87,5 @@ var VariantKeySpec = new mongoose.Schema({
 //     }
 // });
 
-var VariantKey = mongoose.model('VariantKey', VariantKeySpec)
+var VariantKey = mongoose.model('Variant_key_specs', VariantKeySpec)
 export default VariantKey 

@@ -1138,3 +1138,42 @@ export default { scrap_bike }
 
 
 
+// if (spec_name == 'Displacement') {
+//     spec_name = "Engine"
+// }
+// if (spec_name == 'Peak Power') {
+//     spec_name = "Power"
+// }
+
+// if (spec_name == 'Max Torque') {
+//     spec_name = "Torque"
+// }
+
+// if (spec_name == 'Brakes Rear') {
+//     spec_name = "Brakes"
+// }
+// if (spec_name == 'Wheels Type') {
+//     spec_name = "Tyre Type"
+// }
+// if (spec_name == 'ARAI Mileage') {
+//     spec_name = "Mileage"
+// }
+// if (
+//     spec_name == "Displacement" ||
+//     "Peak Power" ||
+//     "Max Torque" ||
+//     "Mileage" ||
+//     "Brakes Rear" ||
+//     "Wheels Type" ||
+//     "Motor Power" ||
+//     "Cylinders" ||
+//     "Kerb Weight"
+// ) {
+//     used_var.show_overview = 1
+// } else {
+//     used_var.show_overview = 0
+// }
+
+// const verintId = await keyspecification.findOne({ name: spec_name })
+// used_var.variant_key_id = verintId?._id
+// used_var.php_variant_key_id = verintId?.id 

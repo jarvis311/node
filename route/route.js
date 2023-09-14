@@ -23,7 +23,7 @@ router.post("/keyspecification", MysqltoMongodb.keyspecification)
 
 
 router.post("/deleteMany", async (req, res) => {
-    const collectionsToDelete = ['variantkeys', 'variantspecifications', 'vehicle_informations', 'vehicle_model_colors', 'pricevariants'];
+    const collectionsToDelete = ['variant_key_specs', 'variant_specifications', 'vehicle_informations', 'vehicle_model_colors', 'vehicle_price_variants'];
     for (const collectionName of collectionsToDelete) {
         try {
             await mongoose.connection.db.dropCollection(collectionName);

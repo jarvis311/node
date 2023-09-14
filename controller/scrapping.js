@@ -11,10 +11,11 @@ import VariantSpecification from "../Model/VariantSpecification.js";
 import VariantKey from "../Model/VariantKeySpec.js";
 import vehicle_model_color from "../Model/VehicleModelColor.js";
 import CategoryModel from "../Model/categories.js"
-import Counter from '../Model/Counter.js'
-// import getNextVariantKeyId from "../helper/helper.js"
+import keyspecification from "../Model/keyspecification.js"
+// import Counter from '../Model/Counter.js'
 import dd from "dump-die";
-import { createTestAccount } from "nodemailer";
+
+// import { createTestAccount } from "nodemailer";
 
 var link;
 
@@ -25,245 +26,267 @@ const scrap_bike = async (input, brand) => {
         var brand = brand
         var brand_id = brand._id
         let brand_php_id = brand.id
-        // const findCategoryId = await CategoryModel.findOne({ id: input.category })
-        // let category_id = findCategoryId._id
-        // let category_php_id = findCategoryId.id
+        const findCategoryId = await CategoryModel.findOne({ id: input.category })
+        let category_id = findCategoryId._id
+        let category_php_id = findCategoryId.id
 
         if (input.scrap_type == "brand") {
             var new_bike_url = "https://www.bikedekho.com/" + brand.name + "-bikes"
         } else {
             var res_specific_bikes = await get_specific_bike(link, input, brand)
-
             return res_specific_bikes;
         }
         let data_res_arr = await scrap_common_model(new_bike_url)
 
-        if ('upcomingCars' in data_res_arr) {
-            data_res_arr.upcomingCars.items.map(item => {
-                data_res_arr.items.push(item)
-            })
-        }
+
         // dd("sdhasfjkl>>>", data_res_arr.items)
         if ('items' in data_res_arr) {
-            for (const val of data_res_arr.items) {
-                // console.log("val>>>>>", val)
-                brand_id = brand._id
-                const model_name = val.modelName ? val.modelName : "NA"
-                const fuel_type = val.fuelType ? val.fuelType : "NA"
-                let avg_rating = 0
-                let image = "NA"
-                if (val.avgRating) {
-                    if (val.avgRating == "") {
-                        avg_rating = 0
-                    } else {
-                        avg_rating = val.avgRating
-                    }
-                } if (val.image) {
-                    // change by jignesh
-                    image = val.image
-                } else {
-                    image = "NA"
-                }
-                const cheakidOfVehicalInfo = await vehicle_information.findOne().select({ php_id: 1 }).sort({ php_id: -1 })
-                const tokenIdOfVehicalInfo = cheakidOfVehicalInfo ? cheakidOfVehicalInfo.php_id + 1 : 1
-                const php_id = tokenIdOfVehicalInfo
-
-                const review_count = val.reviewCount ? val.reviewCount : 0;
-                const variant_name = val.variantName ? val.variantName : "NA";
-                const min_price = val.minPriceNonFormat ? val.minPriceNonFormat : 0;
-                const max_price = val.maxPriceNonFormat ? val.maxPriceNonFormat : 0;
-                const price_range = val.priceRange ? val.priceRange : "NA";
-                const status = val.status ? val.status : "NA";
-                const launched_at = val.launchedAt ? val.launchedAt : "NA";
-                const Launch_date = val.variantLaunchDate ? val.variantLaunchDate : "NA";
-                const model_popularity = val.modelPopularity ? val.modelPopularity : 0;
-                const mileage = val.modelMilegae ? val.modelMilegae : "NA";
-                const engine = val.ccValue ? val.ccValue : "NA";
-                const style_type = val.style_type ? val.style_type : "NA";
-                let showroom_price = 0
-                let on_road_price = 0
-                let bodytype_id = 0
-                let max_power = 0
-                // let [rowsd, files] = await con.query("SELECT * FROM `bodytypes` WHERE `category_id`=" + `'${category_id}'` + " AND `name` LIKE " + `'${style_type}'`)
-                const findBodyTypeName = await Bodytypes.findOne(
-                    {
-                        category_id: category_id, // replace category_id with the actual value
-                        name: new RegExp(style_type) // replace style_type with the actual value
+            await processItems(data_res_arr)
+            async function processItems(data_res_arr) {
+                if ('upcomingCars' in data_res_arr) {
+                    data_res_arr.upcomingCars.items.map(item => {
+                        data_res_arr.items.push(item)
                     })
-                if (findBodyTypeName) {
-                    bodytype_id = findBodyTypeName.id
-                } else {
-                    const newBodyTypeId = await Bodytypes.create({
-                        // php_id: id,
-                        category_id: category_id,
-                        name: style_type,
-                        image: '',
-                        status: 1,
-                        position: 0
-                    });
-                    bodytype_id = newBodyTypeId.id;
                 }
-                max_power = val.maxPower ? val.maxPower : "NA"
-                if (val.exShowroomPrice) {
-                    if (val.exShowroomPrice == "") {
-                        showroom_price = 0
-                    } else {
-                        showroom_price = val.exShowroomPrice
-                    }
-                }
-                if (val.minOnRoadPrice) {
-                    if (val.minOnRoadPrice == "") {
-                        on_road_price = 0
-                    } else {
-                        on_road_price = val.minOnRoadPrice
-                    }
-                }
-                let rto_price = 0
-                let insurance_price = 0
-                let other_price = 0
-                let rtoPrice = 0
-                let insurancePrice = 0
-
-                if (val.upcoming === true) {
-                    var client = await axios.get("https://www.bikedekho.com" + val.otherLinks.url)
-                    var html = cheerio.load(client.data).html()
-                    var response = html.split('</script>');
-                    var data_respone = get_string_between(response[11], '<script>window.__INITIAL_STATE__ = ', " window.__isWebp =  false;")
-                    var data1 = data_respone.split("; window.__CD_DATA__ =")
-                    var data2 = data1[0].split('" ",{}; window.__isMobile')
-                    let res_arr = JSON.parse(data2)
-                    if (res_arr.priceDetailSection) {
-                        var price_details = res_arr.priceDetailSection[0].variantDetailByFuel[""]
-
-                        price_details.map((val2) => {
-                            if (variant_name == val2.name) {
-                                rto_price = val2.rto ? val2.rto : 0
-                                insurance_price = val2.insurance ? val2.insurance : 0
-                                other_price = val2.others.total ? val2.others.total : 0
-                            }
-                        })
-                    } else {
-                        if (showroom_price < 25000) {
-                            rtoPrice = ((showroom_price * 2) / 100)
+                const insertPromises = [];
+                for (const val of data_res_arr.items) {
+                    brand_id = brand._id
+                    const model_name = val.modelName ? val.modelName : "NA"
+                    const fuel_type = val.fuelType ? val.fuelType : "NA"
+                    let avg_rating = 0
+                    let image = "NA"
+                    if (val.avgRating) {
+                        if (val.avgRating == "") {
+                            avg_rating = 0
                         } else {
-                            if (showroom_price > 25000 && showroom_price < 45000) {
-                                rtoPrice = ((showroom_price * 4) / 100)
+                            avg_rating = val.avgRating
+                        }
+                    } if (val.image) {
+                        // change by jignesh
+                        image = val.image
+                    } else {
+                        image = "NA"
+                    }
+                    const cheakidOfVehicalInfo = await vehicle_information.findOne().select({ php_id: 1 }).sort({ php_id: -1 })
+                    const tokenIdOfVehicalInfo = cheakidOfVehicalInfo ? cheakidOfVehicalInfo.php_id + 1 : 1
+                    const php_id = tokenIdOfVehicalInfo
+
+                    const review_count = val.reviewCount ? val.reviewCount : 0;
+                    const variant_name = val.variantName ? val.variantName : "NA";
+                    const min_price = val.minPriceNonFormat ? val.minPriceNonFormat : 0;
+                    const max_price = val.maxPriceNonFormat ? val.maxPriceNonFormat : 0;
+                    const price_range = val.priceRange ? val.priceRange : "NA";
+                    const status = val.status ? val.status : "NA";
+                    const launched_at = val.launchedAt ? val.launchedAt : "NA";
+                    const Launch_date = val.variantLaunchDate ? val.variantLaunchDate : "NA";
+                    const model_popularity = val.modelPopularity ? val.modelPopularity : 0;
+                    const mileage = val.modelMilegae ? val.modelMilegae : "NA";
+                    const engine = val.ccValue ? val.ccValue : "NA";
+                    const style_type = val.style_type ? val.style_type : "NA";
+                    let showroom_price = 0
+                    let on_road_price = 0
+                    let bodytype_id = 0
+                    let max_power = 0
+                    // let [rowsd, files] = await con.query("SELECT * FROM `bodytypes` WHERE `category_id`=" + `'${category_id}'` + " AND `name` LIKE " + `'${style_type}'`)
+                    const findBodyTypeName = await Bodytypes.findOne(
+                        {
+                            category_id: category_id, // replace category_id with the actual value
+                            name: new RegExp(style_type) // replace style_type with the actual value
+                        })
+                    if (findBodyTypeName) {
+                        bodytype_id = findBodyTypeName.id
+                    } else {
+                        const newBodyTypeId = await Bodytypes.create({
+                            // php_id: id,
+                            category_id: category_id,
+                            name: style_type,
+                            image: '',
+                            status: 1,
+                            position: 0
+                        });
+                        bodytype_id = newBodyTypeId.id;
+                    }
+                    max_power = val.maxPower ? val.maxPower : "NA"
+                    if (val.exShowroomPrice) {
+                        if (val.exShowroomPrice == "") {
+                            showroom_price = 0
+                        } else {
+                            showroom_price = val.exShowroomPrice
+                        }
+                    }
+                    if (val.minOnRoadPrice) {
+                        if (val.minOnRoadPrice == "") {
+                            on_road_price = 0
+                        } else {
+                            on_road_price = val.minOnRoadPrice
+                        }
+                    }
+                    let rto_price = 0
+                    let insurance_price = 0
+                    let other_price = 0
+                    let rtoPrice = 0
+                    let insurancePrice = 0
+
+                    if (val.upcoming === true) {
+                        var client = await axios.get("https://www.bikedekho.com" + val.otherLinks.url)
+                        var html = cheerio.load(client.data).html()
+                        var response = html.split('</script>');
+                        var data_respone = get_string_between(response[11], '<script>window.__INITIAL_STATE__ = ', " window.__isWebp =  false;")
+                        var data1 = data_respone.split("; window.__CD_DATA__ =")
+                        var data2 = data1[0].split('" ",{}; window.__isMobile')
+                        let res_arr = JSON.parse(data2)
+                        if (res_arr.priceDetailSection) {
+                            var price_details = res_arr.priceDetailSection[0].variantDetailByFuel[""]
+
+                            price_details.map((val2) => {
+                                if (variant_name == val2.name) {
+                                    rto_price = val2.rto ? val2.rto : 0
+                                    insurance_price = val2.insurance ? val2.insurance : 0
+                                    other_price = val2.others.total ? val2.others.total : 0
+                                }
+                            })
+                        } else {
+                            if (showroom_price < 25000) {
+                                rtoPrice = ((showroom_price * 2) / 100)
                             } else {
-                                if (showroom_price > 45000 && showroom_price < 60000) {
-                                    rtoPrice = ((showroom_price * 6) / 100)
+                                if (showroom_price > 25000 && showroom_price < 45000) {
+                                    rtoPrice = ((showroom_price * 4) / 100)
                                 } else {
-                                    if (showroom_price > 60000) {
-                                        rtoPrice = ((showroom_price * 8) / 100)
+                                    if (showroom_price > 45000 && showroom_price < 60000) {
+                                        rtoPrice = ((showroom_price * 6) / 100)
+                                    } else {
+                                        if (showroom_price > 60000) {
+                                            rtoPrice = ((showroom_price * 8) / 100)
+                                        }
                                     }
                                 }
                             }
-                        }
-                        if (engine < 75) {
-                            insurancePrice = 482
-                        } else {
-                            if (engine > 75 && engine < 150) {
-                                insurancePrice = 752
+                            if (engine < 75) {
+                                insurancePrice = 482
                             } else {
-                                if (engine > 150 && engine < 350) {
-                                    insurancePrice = 1193
+                                if (engine > 75 && engine < 150) {
+                                    insurancePrice = 752
                                 } else {
-                                    insurancePrice = 2323
+                                    if (engine > 150 && engine < 350) {
+                                        insurancePrice = 1193
+                                    } else {
+                                        insurancePrice = 2323
+                                    }
                                 }
                             }
-                        }
-                        insurancePrice = insurancePrice * 5
-                        var totalPriceWithRto = showroom_price + rtoPrice
-                        var finalInsuranceData = insurancePrice + ((insurancePrice * 18) / 100)
-                        if (totalPriceWithRto < on_road_price) {
-                            rtoPrice = Math.round(rtoPrice)
-                            rto_price = rtoPrice
-                        } else {
-                            rto_price = 0
-                        }
-                        var totalPriceWithRtoInsurance = (showroom_price + rtoPrice + finalInsuranceData)
-                        if (totalPriceWithRtoInsurance < on_road_price) {
-                            var otherPrice = on_road_price - totalPriceWithRtoInsurance
-                            if (otherPrice > 500) {
-                                otherPrice = Math.round(otherPrice)
-                                other_price = otherPrice
-                                var insPrice = 0
+                            insurancePrice = insurancePrice * 5
+                            var totalPriceWithRto = showroom_price + rtoPrice
+                            var finalInsuranceData = insurancePrice + ((insurancePrice * 18) / 100)
+                            if (totalPriceWithRto < on_road_price) {
+                                rtoPrice = Math.round(rtoPrice)
+                                rto_price = rtoPrice
                             } else {
-                                insPrice = Math.round(otherPrice)
+                                rto_price = 0
                             }
-                            insurance_price = Math.round(finalInsuranceData + insPrice);
-                            insurance_price = insurance_price;
-                        } else {
-                            other_price = 0
-                            insurance_price = 0
+                            var totalPriceWithRtoInsurance = (showroom_price + rtoPrice + finalInsuranceData)
+                            if (totalPriceWithRtoInsurance < on_road_price) {
+                                var otherPrice = on_road_price - totalPriceWithRtoInsurance
+                                if (otherPrice > 500) {
+                                    otherPrice = Math.round(otherPrice)
+                                    other_price = otherPrice
+                                    var insPrice = 0
+                                } else {
+                                    insPrice = Math.round(otherPrice)
+                                }
+                                insurance_price = Math.round(finalInsuranceData + insPrice);
+                                insurance_price = insurance_price;
+                            } else {
+                                other_price = 0
+                                insurance_price = 0
+                            }
                         }
                     }
-                }
-                const is_popular_search = 1;
-                const is_upcoming = val.upcoming === true ? 0 : 1;
-                const is_latest = 0;
-                const is_content_writer = val.upcoming === true ? 1 : 0;
+                    const is_popular_search = 1;
+                    const is_upcoming = val.upcoming === true ? 0 : 1;
+                    const is_latest = 0;
+                    const is_content_writer = val.upcoming === true ? 1 : 0;
 
-                const brandobj = {
-                    php_id: php_id,
-                    category_id: category_id,
-                    brand_id: brand_id,
-                    brand_php_id: brand_php_id,
-                    category_php_id: category_php_id,
-                    link: link,
-                    scrap_type: input.scrap_type,
-                    model_name: model_name,
-                    fuel_type: fuel_type,
-                    avg_rating: avg_rating,
-                    image: image,
-                    review_count: review_count,
-                    variant_name: variant_name,
-                    min_price: min_price,
-                    max_price: max_price,
-                    price_range: price_range,
-                    status: status,
-                    launched_at: launched_at,
-                    Launch_date: Launch_date,
-                    model_popularity: model_popularity,
-                    mileage: mileage,
-                    engine: engine,
-                    style_type: style_type,
-                    max_power: max_power,
-                    showroom_price: showroom_price,
-                    on_road_price: parseInt(on_road_price),
-                    rto_price: rto_price ? parseInt(rto_price.replaceAll(',', '')) : 0,
-                    body_type: bodytype_id,
-                    bodytype_id: bodytype_id,
-                    insurance_price: insurance_price ? parseInt(insurance_price.replaceAll(',', '')) : 0,
-                    other_price: parseInt(other_price),
-                    is_popular_search: is_popular_search,
-                    is_upcoming: is_upcoming,
-                    is_latest: is_latest,
-                    is_content_writer: is_content_writer
-                }
+                    const brandobj = {
+                        php_id: php_id,
+                        category_id: category_id,
+                        brand_id: brand_id,
+                        brand_php_id: brand_php_id,
+                        category_php_id: category_php_id,
+                        link: link,
+                        scrap_type: input.scrap_type,
+                        model_name: model_name,
+                        fuel_type: fuel_type,
+                        avg_rating: avg_rating,
+                        image: image,
+                        review_count: review_count,
+                        variant_name: variant_name,
+                        min_price: min_price,
+                        max_price: max_price,
+                        price_range: price_range,
+                        status: status,
+                        launched_at: launched_at,
+                        Launch_date: Launch_date,
+                        model_popularity: model_popularity,
+                        mileage: mileage,
+                        engine: engine,
+                        style_type: style_type,
+                        max_power: max_power,
+                        showroom_price: showroom_price,
+                        on_road_price: parseInt(on_road_price),
+                        rto_price: rto_price ? parseInt(rto_price.replaceAll(',', '')) : 0,
+                        body_type: bodytype_id,
+                        bodytype_id: bodytype_id,
+                        insurance_price: insurance_price ? parseInt(insurance_price.replaceAll(',', '')) : 0,
+                        other_price: parseInt(other_price),
+                        is_popular_search: is_popular_search,
+                        is_upcoming: is_upcoming,
+                        is_latest: is_latest,
+                        is_content_writer: is_content_writer
+                    }
 
-                let bike_exist = await vehicle_information.findOne({ $and: [{ brand_id: brand_id }, { model_name: model_name }] })
+                    let bike_exist = await vehicle_information.findOne({ $and: [{ brand_id: brand_id }, { model_name: model_name }] })
 
-                let model_url = "https://www.bikedekho.com" + val.modelUrl
-                let images_url = "https://www.bikedekho.com" + val.modelPictureURL
+                    let model_url = "https://www.bikedekho.com" + val.modelUrl
+                    let images_url = "https://www.bikedekho.com" + val.modelPictureURL
 
 
-                if (bike_exist) {
-                    var bike_data = await vehicle_information.findOneAndUpdate({ $and: [{ brand_id: brand_id }, { model_name: model_name }] }, brandobj, { new: true })
-                    let d = await get_other_details(model_url, images_url, brandobj, bike_exist._id)
-                    // console.log("bike_exist")
-                } else {
-                    let craete = await vehicle_information.create(brandobj)
-                    // console.log("bike_exist craete", craete)
-                    await get_other_details(model_url, images_url, brandobj, craete._id, craete.php_id)
+                    if (bike_exist) {
+                        var bike_data = await vehicle_information.findOneAndUpdate({ $and: [{ brand_id: brand_id }, { model_name: model_name }] }, brandobj, { new: true })
+                        let d = await get_other_details(model_url, images_url, brandobj, bike_exist._id)
+                        // console.log("bike_exist")
+                    } else {
+                        const insertPromise = insertObjectWithSync(brandobj, model_url, images_url);
+                        insertPromises.push(insertPromise);
+                        // await insertObjectWithSync(brandobj, model_url, images_url)
+                        // const craete = await vehicle_information.create(brandobj)
+                        // console.log("bike_exist craete", craete)
+                        await Promise.all(insertPromises);
+                    }
                 }
             }
+
             return (await helper.dataResponse('Vehicle Successfully Scrapped.'))
         } else {
             return (await helper.macthError('Vehicle Not Scrap, Please try again'))
         }
+
         return data_res_arr
     } catch (error) {
         console.log(error);
+    }
+}
+
+async function insertObjectWithSync(brandobj, model_url, images_url) {
+    try {
+        const createdData = await vehicle_information.create(brandobj);
+        if (createdData) {
+            console.log('bike-Created bike-Createdbike-Createdbike-Created!!!!');
+        }
+        await get_other_details(model_url, images_url, brandobj, createdData._id, createdData.php_id);
+        return createdData;
+    } catch (error) {
+        console.error('Error inserting data:', error);
+        throw error;
     }
 }
 
@@ -529,11 +552,10 @@ const get_string_between = (string, start, end) => {
 
 }
 
-const get_other_details = async (url, images_url, dataObj, model_id, php_vehicle_information_id) => {
+async function get_other_details(url, images_url, dataObj, model_id, php_vehicle_information_id) {
     var row
     var key
     var temp
-    console.log(php_vehicle_information_id)
     // dd(php_vehicle_information_id)
     await axios.get(url).then(async (res) => {
         var $ = cheerio.load(res.data)
@@ -606,7 +628,7 @@ const get_other_details = async (url, images_url, dataObj, model_id, php_vehicle
     })
 
     //All price variant
-    axios.get(url).then(async (responsed) => {
+    await axios.get(url).then(async (responsed) => {
         var $ = cheerio.load(responsed.data)
         const tableRows = $(responsed.data).find('table[class="allvariant contentHold"] tbody tr')
 
@@ -661,8 +683,6 @@ const get_other_details = async (url, images_url, dataObj, model_id, php_vehicle
                 if (value.text == "On-Road Price in delhi") {
                     on_road_price = value.value ? value.value.replace(',', '') : 0
                 }
-
-
             })
             let cheakidPriceVariant = await PriceVariant.findOne().select({ php_id: 1 }).sort({ php_id: -1 })
             let tokenidPriceVariant = cheakidPriceVariant ? cheakidPriceVariant.php_id + 1 : 1
@@ -688,25 +708,12 @@ const get_other_details = async (url, images_url, dataObj, model_id, php_vehicle
                 rating: rating,
                 launched_at: launched_at,
             }
-
-
             let exist = await PriceVariant.findOne({ $and: [{ vehicle_information_id: model_id }, { name: model_name }] });
             if (exist) {
                 await PriceVariant.findOneAndUpdate({ $and: [{ vehicle_information_id: model_id }, { name: model_name }] }, dataobje, { new: true });
             } else {
                 await insertPriceVariantAndFetchSpecification(dataobje, link, model_id, php_vehicle_information_id);
             }
-
-            // let exist = await PriceVariant.findOne({ $and: [{ vehicle_information_id: model_id }, { name: model_name }] })
-            // if (exist) {
-            //     await PriceVariant.findOneAndUpdate({ $and: [{ vehicle_information_id: model_id }, { name: model_name }] }, dataobje, { new: true })
-            // } else {
-            //     // PriceVariant.create(dataobje).then((craeteId) => {
-            //     //     console.log("Price variant createed")
-            //     //      get_bike_specification(link, model_id, craeteId._id, dataobje)
-            //     // })
-            //     createPriceVariantAndGetSpecification(dataobje, link, model_id);
-            // }
 
         }
     })
@@ -716,26 +723,25 @@ const get_other_details = async (url, images_url, dataObj, model_id, php_vehicle
 async function insertPriceVariantAndFetchSpecification(dataobje, link, model_id, php_vehicle_information_id) {
     try {
         const createId = await PriceVariant.create(dataobje);
-        console.log("Price variant created");
-
+        console.log("Price variant created Price variant created  Price variant created !!");
         await get_bike_specification(link, model_id, createId._id, dataobje, php_vehicle_information_id, createId.php_id);
         // dd(get_bike_specification)
-        console.log("Specification fetched for the PriceVariant");
-
     } catch (error) {
         console.error("Error:", error);
     }
 }
 //Sumit Patel :- 11-09-2023 End
-const get_bike_specification = async (url, vehicle_information, priceVariant = 0, dataobje, php_vehicle_information_id, php_variant_id) => {
+export const get_bike_specification = async (url, vehicle_information, priceVariant = 0, dataobje, php_vehicle_information_id, php_variant_id) => {
     try {
-        console.log("After", url)
+        // console.log("After", url)
 
         let colors_data = await scrap_common_model(url)
 
         const vehicle_information_id = vehicle_information
         const variant_id = priceVariant
         await processTechnicalSpecs(colors_data, vehicle_information_id, variant_id, php_vehicle_information_id, php_variant_id)
+
+
     } catch (error) {
         console.log(error)
     }
@@ -759,9 +765,6 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
         var usedInc = 0;
         if ('specsTechnicalJson' in colors_data) {
             if ('specification' in colors_data.specsTechnicalJson) {
-
-                // const specifications = colors_data.specsTechnicalJson.specification;
-
                 for (const value of colors_data.specsTechnicalJson.specification) {
                     const spec_name = value.title ? value.title : "NA";
                     let php_specification_id
@@ -769,21 +772,20 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
                     let spec_id;
                     if (spec_exist) {
                         spec_id = spec_exist._id;
+                        php_specification_id = spec_exist.php_id
                     } else {
                         let cheakVariantSpecificationId = await VariantSpecification.findOne().select({ php_id: 1 }).sort({ php_id: -1 });
                         let tokenIdOfVariantSpec = cheakVariantSpecificationId ? cheakVariantSpecificationId.php_id + 1 : 1;
                         let idOfVarSpec = tokenIdOfVariantSpec;
-
                         const varobj = {
                             php_id: idOfVarSpec,
                             name: spec_name,
                         };
                         const create = await VariantSpecification.create(varobj);
+                        console.log("VariantSpecification Createed!!");
                         spec_id = create._id;
                         php_specification_id = create.php_id;
                     }
-                    usedInc++;
-
                     used_var = {
                         vehicle_information_id: vehicle_information_id,
                         variant_id: variant_id,
@@ -796,8 +798,6 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
 
                     async function processItems() {
                         for (const item of value.items) {
-                            // Perform your desired action for each item here
-                            console.log(vehicle_information_id, variant_id, spec_id);
                             let spec_name = item.text ? item.text : "NA";
                             let spec_value = item.value ? item.value : "NA";
                             let v_spe_exist = await VariantKey.findOne({
@@ -808,27 +808,98 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
                                     { name: spec_name },
                                 ],
                             });
-
-                            used_var.name = spec_name;
-                            used_var.value = spec_value;
-
                             if (v_spe_exist) {
-                                console.log('if')
+                                used_var.name = spec_name;
+                                used_var.value = spec_value;
+                                var update = await VariantKey.findOneAndUpdate(
+                                    {
+                                        $and: [
+                                            { vehicle_information_id: vehicle_information_id },
+                                            { variant_id: variant_id },
+                                            { specification_id: spec_id },
+                                            { name: spec_name },
+                                        ],
+                                    },
+                                    used_var,
+                                    { new: true }
+                                );
                             }
                             else {
                                 const cheakidOfVariantKey = await VariantKey.findOne().select({ php_id: 1 }).sort({ php_id: -1 });
                                 const tokenIdOfVariantKey = await (cheakidOfVariantKey ? cheakidOfVariantKey.php_id + 1 : 1);
                                 used_var.php_id = tokenIdOfVariantKey;
-                                console.log(tokenIdOfVariantKey);
+                                const specMappings = {
+                                    'Displacement': { show_overview: 1, variant_key_id: 1, newName: 'Engine' },
+                                    'Peak Power': { show_overview: 1, variant_key_id: 2, newName: 'Power' },
+                                    'Max Torque': { show_overview: 1, variant_key_id: 3, newName: 'Torque' },
+                                    'Mileage': { show_overview: 1, variant_key_id: 4 },
+                                    'Brakes Rear': { show_overview: 1, variant_key_id: 5, newName: 'Brakes' },
+                                    'Wheels Type': { show_overview: 1, variant_key_id: 6, newName: 'Tyre Type' },
+                                    'Fuel Type': { show_overview: 0, variant_key_id: 7 },
+                                    'BHP': { show_overview: 0, variant_key_id: 8 },
+                                    'City Mileage': { show_overview: 0, variant_key_id: 9 },
+                                    'Transmission Type': { show_overview: 0, variant_key_id: 10 },
+                                    'Max Power': { show_overview: 0, variant_key_id: 11 },
+                                    'Displacement': { show_overview: 0, variant_key_id: 12 },
+                                    'Max Torque': { show_overview: 0, variant_key_id: 13 },
+                                    'GVW': { show_overview: 0, variant_key_id: 14 },
+                                    'Max Speed': { show_overview: 0, variant_key_id: 15 },
+                                    'Number of Tyre': { show_overview: 0, variant_key_id: 16 },
+                                    'Fuel Tank': { show_overview: 0, variant_key_id: 17 },
+                                    'Number of Cylinder': { show_overview: 0, variant_key_id: 18 },
+                                    'Gear Box': { show_overview: 0, variant_key_id: 19 },
+                                    'Capacity CC': { show_overview: 0, variant_key_id: 20 },
+                                    'Top Speed': { show_overview: 0, variant_key_id: 21 },
+                                    'Range': { show_overview: 0, variant_key_id: 22 },
+                                    'Cruise speed': { show_overview: 0, variant_key_id: 23 },
+                                    'Guests': { show_overview: 0, variant_key_id: 24 },
+                                    'Guest Cabin': { show_overview: 0, variant_key_id: 25 },
+                                    'Crew': { show_overview: 0, variant_key_id: 26 },
+                                    'Travel range': { show_overview: 0, variant_key_id: 27 },
+                                    'Max Take Off Weight': { show_overview: 0, variant_key_id: 28 },
+                                    'Fuel Tank capacity': { show_overview: 0, variant_key_id: 29 },
+                                    'Body Type': { show_overview: 0, variant_key_id: 30 },
+                                    'Driving Range': { show_overview: 0, variant_key_id: 31 },
+                                    'Motor Power': { show_overview: 1, variant_key_id: 32 },
+                                    'Battery Charging Time': { show_overview: 0, variant_key_id: 33 },
+                                    'Motor Type': { show_overview: 0, variant_key_id: 34 },
+                                    'Battery Capacity': { show_overview: 0, variant_key_id: 35 },
+                                    'Cylinders': { show_overview: 1, variant_key_id: 38 },
+                                    'Seats': { show_overview: 0, variant_key_id: 39 },
+                                    'Service Cost': { show_overview: 0, variant_key_id: 40 },
+                                    'Boot Space': { show_overview: 0, variant_key_id: 41 },
+                                    'Airbags': { show_overview: 0, variant_key_id: 42 },
+                                    'Drive Type': { show_overview: 0, variant_key_id: 43 },
+                                    'Payload': { show_overview: 0, variant_key_id: 44 },
+                                    'ABS': { show_overview: 0, variant_key_id: 45 },
+                                    'Battery Warranty': { show_overview: 0, variant_key_id: 46 },
+                                    'Cooling System': { show_overview: 0, variant_key_id: 47 },
+                                    'Kerb Weight': { show_overview: 1, variant_key_id: 48 }
+                                };
+                                // Assuming spec_name is one of the keys in specMappings
+                                if (specMappings.hasOwnProperty(spec_name)) {
+                                    const mapping = specMappings[spec_name];
+                                    used_var.show_overview = mapping.show_overview;
+                                    used_var.variant_key_id = mapping.variant_key_id;
+                                    spec_name = mapping.newName || spec_name;
+                                } else {
+                                    used_var.show_overview = 0;
+                                    used_var.variant_key_id = 0; // Set the default value here if needed
+                                }
+                                // console.log(tokenIdOfVariantKey);
+                                used_var.name = spec_name;
+                                used_var.value = spec_value;
                                 await VariantKey.create(used_var)
-                                console.log('else')
+                                // console.log('else')
+                                console.log("VariantKey Created!!!")
 
                             }
-                            console.log(`Spec Name: ${spec_name}, Spec Value: ${spec_value}`);
+                            // console.log(`Spec Name: ${spec_name}, Spec Value: ${spec_value}`);
                         }
                     }
                     // Call the function to process items sequentially
                     await processItems();
+                    // dd('Stop!!!')
                 }
             }
             if ('keySpecs' in colors_data.specsTechnicalJson) {
@@ -890,243 +961,19 @@ const add_other_images = async (images_data_arr2, model_id) => {
 export default { scrap_bike }
 
 
-// if (v_spe_exist) {
 
-//     if (spec_name == 'Motor Power') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 32
-//     }
-//     if (spec_name == 'Motor Type') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 34
-//     }
-//     if (spec_name == 'Battery Capacity') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 33
-//     }
-//     if (spec_name == 'Engine') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 1
-//     }
-//     if (spec_name == 'Peak Power') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 2
-//     }
-//     if (spec_name == 'Max Torque') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 3
-//     }
-//     if (spec_name == 'Brakes') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 5
-//     }
-//     if (spec_name == 'Cylinders') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 38
-//     }
-//     if (spec_name == 'Kerb Weight') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 48
-//     }
-//     // const updateQr = ("UPDATE " + `variant_key_specs ` + "SET " + `vehicle_information_id = ${vehicle_information_id}, variant_id = ${variant_id}, specification_id = ${spec_id}, name = '${spec_name}',value = '${spec_value}',show_overview = ${used_var.show_overview}, variant_key_id = ${used_var.variant_key_id}  WHERE vehicle_information_id = ${vehicle_information_id} AND variant_id = ${variant_id} AND specification_id = ${spec_id} AND name = '${spec_name}'`)
-//     // const updateVar = await con.query(updateQr)
-//     var update = await VariantKey.findOneAndUpdate({ $and: [{ vehicle_information_id: vehicle_information_id }, { variant_id: variant_id }, { specification_id: spec_id }, { name: spec_name }] }, used_var, { new: true })
-// } else {
-//     if (spec_name == 'Displacement') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 1
-//         spec_name = "Engine"
-//     }
-//     if (spec_name == 'Peak Power') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 2
-//         spec_name = "Power"
-//     }
-//     if (spec_name == 'Max Torque') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 3
-//         spec_name = "Torque"
-//     }
-//     if (spec_name == 'Mileage') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 4
-//     }
-//     if (spec_name == 'Brakes Rear') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 5
-//         spec_name = "Brakes"
-//     }
-//     if (spec_name == 'Wheels Type') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 6
-//         spec_name = "Type Type"
-//     }
-//     if (spec_name == 'Fuel Type') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 7
-//     }
-//     if (spec_name == 'BHP') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 8
-//     }
-//     if (spec_name == 'City Mileage') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 9
-//     }
-//     if (spec_name == 'Transmission Type') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 10
-//     }
-//     if (spec_name == 'Max Power') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 11
-//     }
-//     if (spec_name == 'Displacement') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 12
-//     }
-//     if (spec_name == 'Max Torque') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 13
-//     }
-//     if (spec_name == 'GVW') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 14
-//     }
-//     if (spec_name == 'Max Speed') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 15
-//     }
-//     if (spec_name == 'Number of Tyre') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 16
-//     }
-//     if (spec_name == 'Fule Tank') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 17
-//     }
-//     if (spec_name == 'Number of Cylinder') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 18
-//     }
-//     if (spec_name == 'Gear Box') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 19
-//     }
-//     if (spec_name == 'Capacity CC') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 20
-//     }
-//     if (spec_name == 'Top Speed') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 21
-//     }
-//     if (spec_name == 'Range') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 22
-//     }
-//     if (spec_name == 'Cruise speed') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 23
-//     }
-//     if (spec_name == 'Guests') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 24
-//     }
-//     if (spec_name == 'Guest Cabin') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 25
-//     }
-//     if (spec_name == 'Crew') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 26
-//     }
-//     if (spec_name == 'Travel range') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 27
-//     }
-//     if (spec_name == 'Max Take Off Weight') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 28
-//     }
-//     if (spec_name == 'Fuel Tank capacity') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 29
-//     }
-//     if (spec_name == 'Body Type') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 30
-//     }
-//     if (spec_name == 'Driving Range') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 31
-//     }
 
-//     if (spec_name == 'Motor Power') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 32
-//     }
-//     if (spec_name == 'Battery Charging Time') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 33
-//     }
-//     if (spec_name == 'Motor Type') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 34
-//     }
-//     if (spec_name == 'Battery Capacity') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 35
-//     }
-//     if (spec_name == 'Cylinders') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 38
-//     }
-//     if (spec_name == 'Seats') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 39
-//     }
-//     if (spec_name == 'Service Cost') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 40
-//     }
-//     if (spec_name == 'Boot Space') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 41
-//     }
-//     if (spec_name == 'Airbags') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 42
-//     }
-//     if (spec_name == 'Drive Type') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 43
-//     }
-//     if (spec_name == 'Payload') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 44
-//     }
-//     if (spec_name == 'ABS') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 45
-//     }
-//     if (spec_name == 'Battery Warranty') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 46
-//     }
-//     if (spec_name == 'Cooling System') {
-//         used_var.show_overview = 0
-//         used_var.variant_key_id = 47
-//     }
-//     if (spec_name == 'Kerb Weight') {
-//         used_var.show_overview = 1
-//         used_var.variant_key_id = 48
-//     }
-//     // const qr = ("INSERT INTO variant_key_specs( vehicle_information_id, variant_id, specification_id, name, value, show_overview, variant_key_id )") + ' VALUES ' + (`(${vehicle_information_id}, ${variant_id},${spec_id},'${spec_name}','${spec_value.replaceAll("'s", " ")}',${used_var.show_overview == "undefined" || undefined ? 0 : used_var.show_overview},${used_var.variant_key_id == "undefined" || undefined ? 0 : used_var.variant_key_id})`)
-//     // let craete = await con.query(qr)
-//     var update = await VariantKey.create(used_var)
+
+
+// const arr = ["A", "B", "C", "D", "E", "F"]
+// for (const iterator of arr) {
+//     console.log("iterator", iterator)
+//     await getNum()
 // }
 
 
-
-
+// async function getNum() {
+//     for (let i = 0; i < 1000; i++) {
+//         console.log(i)
+//     }
+// }
