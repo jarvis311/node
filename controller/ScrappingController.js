@@ -29,11 +29,7 @@ const get_brand = async (req, res) => {
 
 const scrap_data = async (req, res) => {
     var input = req.body
-    var brand = await Brands.findOne({ name: input.brand })
-
-    console.log(brand)
-
-
+    var brand = await Brands.findOne({ name: input.brand, category_id: input.category })
     // let queryData = con.query("SELECT * FROM `brands` WHERE `name`= " + `'${input.brand}'`, (err, result) => {
     //     brand = result[0]
     //     executeFunc()
