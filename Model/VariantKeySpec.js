@@ -10,15 +10,12 @@ var VariantKeySpec = new mongoose.Schema({
     // },
     vehicle_information_id: {
         type: mongoose.Schema.Types.ObjectId,
-        default: 0
     },
     variant_id: {
         type: mongoose.Schema.Types.ObjectId,
-        default: 0
     },
     specification_id: {
         type: mongoose.Schema.Types.ObjectId,
-        default: 0,
     },
     php_vehicle_information_id: {
         type: Number,
@@ -48,7 +45,6 @@ var VariantKeySpec = new mongoose.Schema({
     variant_key_id: {
         // type: Number,
         type: mongoose.Schema.Types.ObjectId,
-        default: 0
     },
     php_variant_key_id: {
         type: Number,
