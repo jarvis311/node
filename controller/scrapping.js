@@ -892,7 +892,7 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
                                 const cheakidOfKeySpec = await keyspecification.findOne().select({ id: 1 }).sort({ id: -1 });
                                 const tokenIdOfKeySpec = await (cheakidOfKeySpec ? cheakidOfKeySpec.id + 1 : 1);
                                 // used_var.id = tokenIdOfKeySpec;
-                                console.log("tokenIdOfKeySpec>>>", tokenIdOfKeySpec)
+                                // console.log("tokenIdOfKeySpec>>>", tokenIdOfKeySpec)
 
                                 // const findOrUpdateKeySpesificationn = await keyspecification.findOneAndUpdate({name:spec_name},{name:spec_name,id:tokenIdOfKeySpec},{upsert:true,new:true})
                                 const findOrUpdateKeySpesificationn = await keyspecification.findOne({ name: spec_name })

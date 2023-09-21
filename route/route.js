@@ -5,6 +5,7 @@ import Bikecontroler from "../controller/ScrappingController.js"
 import MysqltoMongodb from '../controller/MysqltoMongodb.js';
 import ScrappingCarConroller from '../controller/CarScrappingController.js';
 import mongoose from 'mongoose';
+import { getVehicleInformationData } from '../controller/GetVehicleInformation.controller.js';
 
 router.post('/scrap_bike', Bikecontroler.scrap_data)
 
@@ -20,6 +21,7 @@ router.post("/vehicle_information", MysqltoMongodb.vehicle_informations)
 router.post("/variant_key_specs", MysqltoMongodb.variant_key_specs)
 router.post("/price_variants", MysqltoMongodb.price_variants)
 router.post("/keyspecification", MysqltoMongodb.keyspecification)
+router.get("/get-vehicles", getVehicleInformationData)
 
 
 router.post("/deleteMany", async (req, res) => {
