@@ -18,7 +18,37 @@ import vehicle_information from "../Model/VehicleInformation.js";
 
 export const getVehicleInformationData = async (req, res) => {
     try {
-        const getData = await vehicle_information.aggregate({})
+        const getData = await vehicle_information.aggregate([
+            {
+                $lookup: {
+                    from: 'brands',
+                    localField: 'brand_id',
+                    foreignField: '_id',
+                    as: 'brand_id',
+                    pipeline: [{
+                        $project: { id: 1, name: 1 },
+                    }],
+                },
+
+            },
+            {
+                $unwind: '$brand_id' // Unwind the 'brand_id' array
+            },
+            {
+                $lookup: {
+                    from: 'cataroies',
+                    localField: 'category_id',
+                    foreignField: '_id',
+                    as: 'category_id',
+                    pipeline: [{
+                        $project: { id: 1, category_name: 1 }
+                    }]
+                }
+            },
+            {
+                $unwind: '$category_id' // Unwind the 'category_id' array
+            }
+        ])
         res.json(getData)
     } catch (error) {
         res.json(error.message)

@@ -34,6 +34,8 @@ const scrap_cars = async (input, brand) => {
         var data_res_arr = await scrap_coman_code(new_bike_url)
         if ('items' in data_res_arr) {
             for (const val of data_res_arr.items) {
+                console.log(val)
+                console.log(val.dcbdto)
                 const cheakidOfVehicalInfo = await vehicle_information.findOne().select({ php_id: 1 }).sort({ php_id: -1 })
                 const tokenIdOfVehicalInfo = cheakidOfVehicalInfo ? cheakidOfVehicalInfo.php_id + 1 : 1
                 const php_id = tokenIdOfVehicalInfo
@@ -67,7 +69,7 @@ const scrap_cars = async (input, brand) => {
                     category_id: category_id, name: new RegExp(style_type)
                 })
                 if (findBodyTypeName) {
-                    bodytype_id = findBodyTypeName._id
+                    bodytype_id = findBodyTypeName.id
                 } else {
                     const newBodyTypeId = await Bodytypes.create({
                         // php_id: id,
@@ -77,7 +79,7 @@ const scrap_cars = async (input, brand) => {
                         status: 1,
                         position: 0
                     });
-                    bodytype_id = newBodyTypeId._id;
+                    bodytype_id = newBodyTypeId.id;
                 }
 
                 if (showroom_price.includes('Lakh')) {
