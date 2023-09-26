@@ -6,7 +6,7 @@ import vehicle_information from "../Model/VehicleInformation.js";
 import PriceVariant from "../Model/priceVariant.js";
 import VariantSpecification from "../Model/VariantSpecification.js";
 import VariantKey from "../Model/VariantKeySpec.js";
-import con from "../connecttion/mysqlconn.js";
+// import con from "../connecttion/mysqlconn.js";
 
 
 

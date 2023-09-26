@@ -5,7 +5,7 @@ import CarScrppingContrller from '../controller/CarScrappingController.js'
 import TruckContrller from "../controller/TruckScrappingController.js"
 import ShipController from "../controller/ShipScrappingController.js"
 import AircraftContrller from "../controller/AircraftScrappingController.js"
-import con from "../connecttion/mysqlconn.js";
+// import con from "../connecttion/mysqlconn.js";
 // import Brand from "../Model/Brands.js"
 
 

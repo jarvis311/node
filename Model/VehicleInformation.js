@@ -145,7 +145,8 @@ var vehicle_informationSchema = new mongoose.Schema({
         default: 0
     },
     bodytype_id: {
-        type: Number,
+        // type: Number,
+        type: mongoose.Schema.Types.ObjectId,
         default: 0
     },
     is_content_writer: {

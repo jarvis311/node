@@ -64,12 +64,12 @@ const scrap_cars = async (input, brand) => {
                 console.log('style_type>>>>>', style_type)
 
 
-                let bodytype_id = 0
+                let bodytype_id
                 const findBodyTypeName = await Bodytypes.findOne({
                     category_id: category_id, name: new RegExp(style_type)
                 })
                 if (findBodyTypeName) {
-                    bodytype_id = findBodyTypeName.id
+                    bodytype_id = findBodyTypeName._id
                 } else {
                     const newBodyTypeId = await Bodytypes.create({
                         // php_id: id,
@@ -79,7 +79,7 @@ const scrap_cars = async (input, brand) => {
                         status: 1,
                         position: 0
                     });
-                    bodytype_id = newBodyTypeId.id;
+                    bodytype_id = newBodyTypeId._id;
                 }
 
                 if (showroom_price.includes('Lakh')) {
@@ -121,7 +121,7 @@ const scrap_cars = async (input, brand) => {
                     fuel_type: fuel_type,
                     avg_rating: avg_rating,
                     review_count: review_count,
-                    body_type: bodytype_id,
+                    // body_type: bodytype_id,
                     bodytype_id: bodytype_id,
                     variant_name: variant_name,
                     min_price: min_price,

@@ -85,7 +85,7 @@ const scrap_bike = async (input, brand) => {
                     const style_type = val.style_type ? val.style_type : "NA";
                     let showroom_price = 0
                     let on_road_price = 0
-                    let bodytype_id = 0
+                    let bodytype_id
                     let max_power = 0
                     // let [rowsd, files] = await con.query("SELECT * FROM `bodytypes` WHERE `category_id`=" + `'${category_id}'` + " AND `name` LIKE " + `'${style_type}'`)
                     const findBodyTypeName = await Bodytypes.findOne(
@@ -94,7 +94,7 @@ const scrap_bike = async (input, brand) => {
                             name: new RegExp(style_type) // replace style_type with the actual value
                         })
                     if (findBodyTypeName) {
-                        bodytype_id = findBodyTypeName.id
+                        bodytype_id = findBodyTypeName._id
                     } else {
                         const newBodyTypeId = await Bodytypes.create({
                             // php_id: id,
@@ -104,7 +104,7 @@ const scrap_bike = async (input, brand) => {
                             status: 1,
                             position: 0
                         });
-                        bodytype_id = newBodyTypeId.id;
+                        bodytype_id = newBodyTypeId._id;
                     }
                     max_power = val.maxPower ? val.maxPower : "NA"
                     if (val.exShowroomPrice) {
@@ -349,16 +349,24 @@ const get_specific_bike = async (link, input1, brand) => {
                 const max_power = val.maxPower ? val.maxPower : "NA";
                 let showroom_price = 0
                 let on_road_price = 0
-                let bodytype_id = 0
+                let bodytype_id
 
-                var bodyTypedata = await Bodytypes.findOne({ $and: [{ category_id: category_id }, { name: style_type }] })
+                let bodyTypedata = await Bodytypes.findOne({ $and: [{ category_id: category_id }, { name: style_type }] })
 
                 // let [rows, files] = await con.query("SELECT * FROM `bodytypes` WHERE `category_id`= " + `'${category_id}'` + " AND `name` LIKE " + `'${style_type}'`)
                 // let bodyTypedata = rows[0]
                 if (bodyTypedata) {
-                    bodytype_id = bodyTypedata.id
+                    bodytype_id = bodyTypedata._id
                 } else {
-                    bodytype_id = 0
+                    const newBodyTypeId = await Bodytypes.create({
+                        // php_id: id,
+                        category_id: category_id,
+                        name: style_type,
+                        image: '',
+                        status: 1,
+                        position: 0
+                    });
+                    bodytype_id = newBodyTypeId._id;
                 }
                 if (val.exShowroomPrice) {
                     if (val.exShowroomPrice == "") {
