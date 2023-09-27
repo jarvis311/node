@@ -50,7 +50,7 @@ const brands = async (req, res) => {
                     is_popular: val.is_popular,
                     title: val.title,
                     logo: val.logo,
-                    createdAt: val.created_at,
+                    // createdAt: val.created_at,
                     updatedAt: val.updated_at,
                 })
                 var dd = await data.save()
@@ -79,7 +79,7 @@ const bodytype = async (req, res) => {
                     image: val.image,
                     status: val.status,
                     position: val.position,
-                    createdAt: val.created_at,
+                    // createdAt: val.created_at,
                     updatedAt: val.updated_at,
                 })
                 var dd = await data.save()
@@ -105,7 +105,7 @@ const keyspecification = async (req, res) => {
                     icon: val.icon,
                     deleted_by: val.deleted_by,
                     deleted_at: val.deleted_at,
-                    createdAt: val.created_at,
+                    // createdAt: val.created_at,
                     updatedAt: val.updated_at,
                 })
                 var dd = await data.save()
@@ -130,7 +130,7 @@ const vehicalcolor = async (req, res) => {
                     color_name: val.color_name,
                     color_code: val.color_code,
                     image: val.image,
-                    createdAt: val.created_at,
+                    // createdAt: val.created_at,
                     updatedAt: val.updated_at,
                 })
                 var dd = await data.save()
@@ -151,7 +151,7 @@ const variant_specifications = async (req, res) => {
                 const data = VariantSpecification({
                     id: val.id,
                     name: val.name,
-                    createdAt: val.created_at,
+                    // createdAt: val.created_at,
                     updatedAt: val.updated_at,
                 })
                 var dd = await data.save()
@@ -211,7 +211,7 @@ const vehicle_informations = async (req, res) => {
                     is_new: val.is_new,
                     bodytype_id: val.bodytype_id,
                     is_content_writer: val.is_content_writer,
-                    createdAt: val.created_at,
+                    // createdAt: val.created_at,
                     updatedAt: val.updated_at,
                 })
                 var dd = await data.save()
@@ -242,7 +242,7 @@ const variant_key_specs = async (req, res) => {
                     show_key_feature: val.show_key_feature,
                     show_overview: val.show_overview,
                     is_scraping: val.is_scraping,
-                    createdAt: val.created_at,
+                    // createdAt: val.created_at,
                     updatedAt: val.updated_at,
                 })
                 var dd = await data.save()
@@ -282,7 +282,7 @@ const price_variants = async (req, res) => {
                     rating: val.rating,
                     launched_at: val.launched_at,
                     is_scrapping: val.is_scrapping,
-                    createdAt: val.created_at,
+                    // createdAt: val.created_at,
                     updatedAt: val.updated_at,
                 })
                 var dd = await data.save()

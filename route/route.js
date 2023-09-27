@@ -6,6 +6,7 @@ import MysqltoMongodb from '../controller/MysqltoMongodb.js';
 import ScrappingCarConroller from '../controller/CarScrappingController.js';
 import mongoose from 'mongoose';
 import { filterByBrand, filterByCategory, getBrands, getCategory, getVehicleInformationData, postDataIntoMysql } from '../controller/GetVehicleInformation.controller.js';
+import { MysqltoMongodbConver } from '../controller/MongooseToMysql.js';
 
 router.post('/scrap_bike', Bikecontroler.scrap_data)
 
@@ -29,6 +30,7 @@ router.get("/get-brand", getBrands)
 router.post("/get-filterCategory", filterByCategory)
 router.post("/get-filterBrand", filterByBrand)
 router.post("/mongo-to-mysql/:vehicleId", postDataIntoMysql)
+router.post("/mongo-tomysql", MysqltoMongodbConver)
 
 
 router.post("/deleteMany", async (req, res) => {

@@ -15,7 +15,7 @@ import mongoose from "mongoose";
 import Cataroies from "../Model/categories.js";
 // import con from "../connecttion/mysqlconn.js"
 import Brands from "../Model/Brands.js";
-import { VehicleInformationTable } from "../Model/MySqlModel/vrhicleInformation.js";
+import { VehicleInformationTable } from "../Model/MySqlModel/vehicleInformation.js";
 
 
 
@@ -243,7 +243,6 @@ export const postDataIntoMysql = async (req, res) => {
         //         }
         // INSERT INTO `vehicle_model_color`(`id`, `vehicle_information_id`, `color_name`, `color_code`, `image`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES ('[value-1]','[value-2]','[value-3]','[value-4]','[value-5]','[value-6]','[value-7]','[value-8]','[value-9]')
 
-        const dd = await VehicleInformationTable.findAll({})
 
         res.json(dd)
     } catch (error) {
