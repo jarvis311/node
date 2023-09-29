@@ -30,7 +30,10 @@ export const ModelColorTable = sequelize.define("vehicle_model_colors", {
     deleted_by: {
         type: DataTypes.INTEGER,
     },
-})
+},
+    {
+        tableName: "vehicle_model_color"
+    })
 
 // sequelize.sync().then(() => {
 //     console.log('Book table created successfully!');

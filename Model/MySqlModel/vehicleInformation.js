@@ -202,7 +202,10 @@ export const VehicleInformationTable = sequelize.define("vehicle_informations", 
     //     type: DataTypes.STRING
     // },
     // rating: { type: DataTypes.STRING, defaultValue: 0 },
-})
+},
+    {
+        tableName: "vehicle_information"
+    })
 
 // sequelize.sync().then(() => {
 //     console.log('Book table created successfully!');

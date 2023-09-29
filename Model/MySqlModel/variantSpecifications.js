@@ -16,6 +16,8 @@ export const VariantSpecificationsTable = sequelize.define("variant_specificatio
         type: DataTypes.DATE,
     },
 
+}, {
+    tableName: "variant_specifications"
 })
 
 // sequelize.sync().then(() => {

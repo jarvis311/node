@@ -245,7 +245,7 @@ const scrap_bike = async (input, brand) => {
                     }
 
                     let bike_exist = await vehicle_information.findOne({ $and: [{ brand_id: brand_id }, { model_name: model_name }] })
-                    console.log("bike_exist")
+                    // console.log("bike_exist")
                     let model_url = "https://www.bikedekho.com" + val.modelUrl
                     let images_url = "https://www.bikedekho.com" + val.modelPictureURL
 
@@ -508,17 +508,17 @@ const get_specific_bike = async (link, input1, brand) => {
                 var bike_exist = await vehicle_information.findOne({ $and: [{ brand_id: brand_id }, { model_name: model_name }] })
                 // const [rows, filed] = await con.query("SELECT * FROM `vehicle_information` WHERE `brand_id`= " + `'${brand_id}'` + " AND `model_name` LIKE " + `'${model_name}'`)
                 // const bike_exist = rows[0]
-                console.log('bike_exist', bike_exist)
+                // console.log('bike_exist', bike_exist)
                 var model_url = "https://www.bikedekho.com" + val.modelUrl
                 var images_url = "https://www.bikedekho.com" + val.modelPictureURL
                 if (bike_exist) {
                     const s = await vehicle_information.findOneAndUpdate({ $and: [{ brand_id: brand_id }, { model_name: model_name }] }, dataObj, { new: true })
-                    console.log('bike_exist', s)
+                    // console.log('bike_exist', s)
                     await get_other_details(model_url, images_url, dataObj, bike_exist._id)
                     return bike_exist._id;
                 } else {
                     // const qr = ("INSERT INTO vehicle_information( brand_id, category_id, bodytype_id, model_name, fuel_type, avg_rating, review_count, variant_name, min_price, max_price, image, status, launched_at, Launch_date, model_popularity, mileage, engine, style_type, max_power, showroom_price, rto_price, insurance_price, other_price, is_content_writer, on_road_price, is_popular_search, is_upcoming, is_latest, link )") + ' VALUES ' + (`(${brand_id}, ${category_id},${bodytype_id},'${model_name}','${fuel_type}',${avg_rating},${review_count},'${variant_name}',${min_price},${max_price},'${image}','${status}','${launched_at}','${Launch_date}',${model_popularity},${mileage},${engine},'${style_type}','${max_power}',${showroom_price},${rto_price},${insurance_price},${other_price},${is_content_writer},${on_road_price},${is_popular_search},${is_upcoming},${is_latest},'${link}')`)
-                    console.log('bike_exist else')
+                    // console.log('bike_exist else')
                     var responseOfCreate = await vehicle_information.create({ ...dataObj, php_id: php_id, })
                     await get_other_details(model_url, images_url, dataObj, responseOfCreate._id, responseOfCreate.php_id)
 
@@ -731,7 +731,7 @@ async function get_other_details(url, images_url, dataObj, model_id, php_vehicle
 async function insertPriceVariantAndFetchSpecification(dataobje, link, model_id, php_vehicle_information_id, php_id,) {
     try {
         const createId = await PriceVariant.create({ ...dataobje, php_id: php_id });
-        console.log("Price variant created Price variant created  Price variant created !!");
+        // console.log("Price variant created Price variant created  Price variant created !!");
         await get_bike_specification(link, model_id, createId._id, dataobje, php_vehicle_information_id, createId.php_id);
         // dd(get_bike_specification)
     } catch (error) {
@@ -791,7 +791,7 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
                             name: spec_name,
                         };
                         const create = await VariantSpecification.create(varobj);
-                        console.log("VariantSpecification Createed!!");
+                        // console.log("VariantSpecification Createed!!");
                         spec_id = create._id;
                         php_specification_id = create.php_id;
                     }
@@ -912,7 +912,7 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
                                     used_var.variant_key_id = createKeySpece._id;
                                     used_var.php_variant_key_id = createKeySpece.id;
                                 }
-                                console.log("findOrUpdateKeySpesificationn>>", findOrUpdateKeySpesificationn)
+                                // console.log("findOrUpdateKeySpesificationn>>", findOrUpdateKeySpesificationn)
                                 if (
                                     spec_name == "Displacement" ||
                                     spec_name == "Peak Power" ||
@@ -934,7 +934,7 @@ async function processTechnicalSpecs(colors_data, vehicle_information_id, varian
                                 used_var.value = spec_value;
                                 await VariantKey.create(used_var)
                                 // console.log('else')
-                                console.log("VariantKey Created!!!")
+                                // console.log("VariantKey Created!!!")
 
                             }
                             // console.log(`Spec Name: ${spec_name}, Spec Value: ${spec_value}`);

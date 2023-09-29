@@ -59,6 +59,8 @@ export const VariantkeySpec = sequelize.define("variant_key_specs", {
     updatedAt: {
         type: DataTypes.DATE,
     },
+}, {
+    tableName: "variant_key_specs"
 })
 
 // sequelize.sync().then(() => {

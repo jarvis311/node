@@ -10,7 +10,6 @@ import vehicle_model_color from "../Model/VehicleModelColor.js";
 import Brands from "../Model/Brands.js";
 import CategoryModel from "../Model/categories.js"
 import Bodytypes from '../Model/BodyType.js'
-import dd from "dump-die";
 import keyspecification from "../Model/keyspecification.js";
 
 var link;
@@ -33,9 +32,9 @@ const scrap_cars = async (input, brand) => {
         }
         var data_res_arr = await scrap_coman_code(new_bike_url)
         if ('items' in data_res_arr) {
+            // console.log("data_res_arr>>", data_res_arr)
             for (const val of data_res_arr.items) {
-                console.log(val)
-                console.log(val.dcbdto)
+                // console.log(val)
                 const cheakidOfVehicalInfo = await vehicle_information.findOne().select({ php_id: 1 }).sort({ php_id: -1 })
                 const tokenIdOfVehicalInfo = cheakidOfVehicalInfo ? cheakidOfVehicalInfo.php_id + 1 : 1
                 const php_id = tokenIdOfVehicalInfo
@@ -55,24 +54,34 @@ const scrap_cars = async (input, brand) => {
                 const fuel_type = val.fuelType ? val.fuelType : "NA"
                 const showroom_price = val.exShowRoomPrice ? val.exShowRoomPrice : "NA"
                 const model_popularity = val.modelPopularity ? val.modelPopularity : "NA"
-                const style_type = val.vehicleType ? val.vehicleType : "NA"
+                const style_type = val.dcbdto.bodyType ? val.dcbdto.bodyType || val.style_type : "NA"
                 const on_road_price = val.minOnRoadPrice ? val.minOnRoadPrice : val.exShowRoomPrice ? val.exShowRoomPrice : "NA"
+                const body_type = val.dcbdto.bodyType || "NA"
                 var new_car_url = val.modelUrl
                 var images_url = val.modelPictureURL
                 var specification_url = val.modelSpecsURL
 
-                console.log('style_type>>>>>', style_type)
-
+                let is_content_writer
+                let is_designer
+                is_content_writer = val.upcoming === true ? 1 : 0;
+                is_designer = val.upcoming === true ? 1 : 0;
+                is_content_writer = style_type === "NA" ? 1 : 0
+                is_designer = style_type === "NA" ? 1 : 0
 
                 let bodytype_id
+                let php_bodytype_id
                 const findBodyTypeName = await Bodytypes.findOne({
                     category_id: category_id, name: new RegExp(style_type)
                 })
                 if (findBodyTypeName) {
                     bodytype_id = findBodyTypeName._id
+                    php_bodytype_id = findBodyTypeName.id
                 } else {
+                    const cheakBodyTypeId = await Bodytypes.findOne().select({ id: 1 }).sort({ id: -1 });
+                    let tokenIdOfBodytype = cheakBodyTypeId ? cheakBodyTypeId.id + 1 : 1;
+
                     const newBodyTypeId = await Bodytypes.create({
-                        // php_id: id,
+                        id: tokenIdOfBodytype,
                         category_id: category_id,
                         name: style_type,
                         image: '',
@@ -80,6 +89,7 @@ const scrap_cars = async (input, brand) => {
                         position: 0
                     });
                     bodytype_id = newBodyTypeId._id;
+                    php_bodytype_id = newBodyTypeId.id
                 }
 
                 if (showroom_price.includes('Lakh')) {
@@ -121,8 +131,9 @@ const scrap_cars = async (input, brand) => {
                     fuel_type: fuel_type,
                     avg_rating: avg_rating,
                     review_count: review_count,
-                    // body_type: bodytype_id,
+                    // body_type: body_type,
                     bodytype_id: bodytype_id,
+                    php_bodytype_id: php_bodytype_id,
                     variant_name: variant_name,
                     min_price: min_price,
                     max_price: max_price,
@@ -134,24 +145,21 @@ const scrap_cars = async (input, brand) => {
                     style_type: style_type,
                     showroom_price: showroom_price,
                     on_road_price: on_road_price,
+                    is_content_writer: is_content_writer,
+                    is_designer: is_designer,
                 }
                 let car_exist = await vehicle_information.findOne({ $and: [{ brand_id: brand_id }, { model_name: model_name }] })
-                // const [rows, filed] = await con.query("SELECT * FROM `vehicle_information` WHERE `brand_id`= " + `'${brand_id}'` + " AND `model_name` LIKE " + `'${model_name}'`)
-                // const car_exist = rows[0]
+
                 if (car_exist) {
                     let vehicle_information_id = car_exist._id
                     let php_vehicle_information_id = car_exist.php_id
                     await vehicle_information.findOneAndUpdate({ $and: [{ brand_id: brand_id }, { model_name: model_name }] }, cardata, { new: true })
-                    // const qr = ("UPDATE " + `vehicle_information ` + "SET " + `brand_id = ${brand_id} ,category_id = ${category_id}, model_name = '${model_name}',fuel_type = '${fuel_type}',avg_rating = ${avg_rating}, review_count = ${review_count} ,variant_name = '${variant_name}',min_price='${min_price}',max_price=${max_price},status='${status}', launched_at='${launched_at}',model_popularity='${model_popularity}',mileage=${mileage},engine=${engine},style_type='${style_type}',showroom_price='${showroom_price}',on_road_price='${on_road_price}',link='${link}' WHERE brand_id = ${brand_id} AND model_name LIKE '${model_name}'`)
-                    // const update = await con.query(qr)
 
                     await get_vehicle_other_details(new_car_url, vehicle_information_id, 0, cardata, php_vehicle_information_id)
                 } else {
-                    // const qr = ("INSERT INTO vehicle_information( brand_id, category_id, model_name, fuel_type, avg_rating, review_count, variant_name, min_price, max_price, status, launched_at, model_popularity, mileage, engine, style_type, showroom_price, on_road_price, link  )") + ' VALUES ' + (`(${brand_id}, ${category_id},'${model_name}','${fuel_type}',${avg_rating},${review_count},'${variant_name}','${min_price}',${max_price},'${status}','${launched_at}','${model_popularity}',${mileage},${engine},'${style_type}','${showroom_price}','${on_road_price}','${link}')`)
-                    // let craete = await con.query(qr)
                     let create = await vehicle_information.create({ ...cardata, php_id: php_id })
-                    console.log("vehicle_information created!!")
-                    console.time("response time")
+                    console.log("vehicle_information created!! 1")
+
                     let vehicle_information_id = create._id
                     let php_vehicle_information_id = create.php_id
                     await get_vehicle_other_details(new_car_url, vehicle_information_id, 0, cardata, php_vehicle_information_id)
@@ -248,16 +256,11 @@ const get_vehicle_other_details = async (url, vehicle_information_id, variant_id
                     image: image
                 }
                 let color_exist = await vehicle_model_color.findOne({ $and: [{ vehicle_information_id: vehicle_information_id }, { color_name: color_name }, { image: official_image }] }).count()
-                // const [rows, filed] = await con.query("SELECT * FROM `vehicle_model_color` WHERE `vehicle_information_id`= " + `${vehicle_information_id}` + " AND `color_name` = " + `'${color_name}'` + "AND `image` =" + `'${image}'`)
-                // const color_exist = rows[0]
-
                 if (color_exist) {
                     await vehicle_model_color.findOneAndUpdate({ $and: [{ vehicle_information_id: vehicle_information_id }, { color_name: color_name }] }, carcolor, { new: true })
                 } else {
-                    await vehicle_model_color.create(carcolor)
+                    await vehicle_model_color.create({ ...carcolor, php_vehicle_information_id: php_vehicle_information_id })
                 }
-                // const qr = ("INSERT INTO vehicle_model_color ( vehicle_information_id, color_name, color_code, image)") + ' VALUES ' + (`(${vehicle_information_id}, '${color_name}','${color_code}','${image}')`)
-                // let craete = await con.query(qr)
             }
         }
     }
@@ -349,6 +352,7 @@ const get_variant_details = async (picture_url, vehicle_information, exShowRoomP
         const variantobje = {
             // id: id,
             vehicle_information_id: vehicle_information_id,
+            php_vehicle_information_id: php_vehicle_information_id,
             name: name,
             link: link,
             engine: engine,
@@ -703,6 +707,7 @@ const get_specific_car = async (link, input1, brand) => {
     }
     var brand = brand
     var brand_id = brand._id
+    let brand_php_id = brand.id
     const findCategory = await CategoryModel.findOne({ id: input1.category })
     let category_id_ = findCategory._id
     let category_php_id = findCategory.id
@@ -731,7 +736,7 @@ const get_specific_car = async (link, input1, brand) => {
                 const fuel_type = val.fuelType ? val.fuelType : "NA";
                 const showroom_price = val.exShowRoomPrice ? val.exShowRoomPrice : "NA";
                 const model_popularity = val.modelPopularity ? val.modelPopularity : "NA";
-                const style_type = val.dcbdto.bodyType ? val.dcbdto.bodyType : "NA";
+                const style_type = val.dcbdto.bodyType ? val.dcbdto.bodyType || val.style_type : "NA";
                 const category_id = category_id_;
                 const on_road_price = val.minOnRoadPrice ? val.minOnRoadPrice : val.exShowRoomPric ? val.exShowRoomPric : "NA";
 
@@ -739,22 +744,36 @@ const get_specific_car = async (link, input1, brand) => {
                 var images_url = val.modelPictureURL
                 var specification_url = val.modelSpecsURL
 
+                let is_content_writer
+                let is_designer
+                is_content_writer = val.upcoming === true ? 1 : 0;
+                is_designer = val.upcoming === true ? 1 : 0;
+                is_content_writer = style_type === "NA" ? 1 : 0
+                is_designer = style_type === "NA" ? 1 : 0
 
                 let bodytype_id;
+                let php_bodytype_id
                 let bodyTypedata = await Bodytypes.findOne({ $and: [{ category_id: category_id }, { name: style_type }] })
                 if (bodyTypedata) {
                     bodytype_id = bodyTypedata._id
+                    php_bodytype_id = bodyTypedata.id
                 } else {
-                    let bodyTypedata_ = await Bodytypes.create({ name: style_type, category_id: category_id, image: '', status: 1, position: 0 })
+                    const cheakBodyTypeId = await Bodytypes.findOne().select({ id: 1 }).sort({ id: -1 });
+                    let tokenIdOfBodytype = cheakBodyTypeId ? cheakBodyTypeId.id + 1 : 1;
+
+                    let bodyTypedata_ = await Bodytypes.create({ id: tokenIdOfBodytype, name: style_type, category_id: category_id, image: '', status: 1, position: 0 })
                     bodytype_id = bodyTypedata_._id
+                    php_bodytype_id = bodyTypedata_.id
                 }
 
                 const cardata = {
                     category_id: category_id,
                     category_php_id: category_php_id,
+                    brand_php_id: brand_php_id,
                     brand_id: brand_id,
                     link: link,
                     bodytype_id: bodytype_id,
+                    php_bodytype_id: php_bodytype_id,
                     scrap_type: input1.scrap_type,
                     model_name: model_name,
                     fuel_type: fuel_type,
@@ -772,6 +791,8 @@ const get_specific_car = async (link, input1, brand) => {
                     style_type: style_type,
                     showroom_price: showroom_price,
                     on_road_price: on_road_price,
+                    is_content_writer: is_content_writer,
+                    is_designer: is_designer
                 }
 
                 var car_exist = await vehicle_information.findOne({ $and: [{ model_name: model_name }, { brand_id: brand_id }] })
@@ -786,8 +807,8 @@ const get_specific_car = async (link, input1, brand) => {
                 } else {
 
                     let response = await vehicle_information.create({ ...cardata, php_id: php_id })
-                    console.log("vehicle_information created!!!")
-                    console.time("response time")
+                    console.log("vehicle_information created!!! 2")
+                    // console.time("response time")
                     vehicle_information_id = response._id
                     let php_vehicle_information_id = response.php_id
 
@@ -818,8 +839,9 @@ const scrap_coman_code = async (url) => {
     const res = await axios.get(url)
     var crawler = cheerio.load(res.data).html()
     var html = crawler.split('</script>');
-    // console.log('html', html[10])
+    console.log('html', html)
     let data_respone = get_string_between(html[10], '; window.__INITIAL_STATE__ = ', "; window.__isWebp =  false;")
+    // console.log('html', html[10])
     // console.log('data_respone>>>', data_respone)
     var data1 = data_respone.split("; window.__CD_DATA__ =")
     var data2 = data1[0].split('" ",{}; window.__isMobile')
@@ -855,6 +877,7 @@ const upcoming_car_by_brand = async (url, input) => {
 
 const insert_cars_without_items = async (data_res_arr, type, input) => {
     for (const val of data_res_arr) {
+        // console.log("fsjdflskdmnl", val)
         let category_id
         const category_id_ = await CategoryModel.findOne({ id: Number(input.category) })
         category_id = category_id_._id
@@ -876,11 +899,18 @@ const insert_cars_without_items = async (data_res_arr, type, input) => {
         const Launch_date = val.variantLaunchDate ? val.variantLaunchDate : "NA";
         const engine = val.engine ? val.engine : 0;
         const mileage = val.mileage ? parseFloat(val.mileage) : 0;
-        const style_type = val.style_type ? val.style_type : (val.vehicleType ? val.vehicleType : "NA");
+        const style_type = val?.dcbdto?.bodyType ? val?.dcbdto?.bodyType || val.style_type : "NA"
         const max_power = val.maxPower ? val.maxPower : "NA";
         const model_popularity = val.modelPopularity ? parseFloat(val.modelPopularity) : 0;
         const showroom_price = val.exShowroomPrice ? parseFloat(val.exShowroomPrice) : 0;
         const on_road_price = val.minOnRoadPrice ? parseFloat(val.minOnRoadPrice) : 0;
+        let is_content_writer
+        let is_designer
+        is_content_writer = val.upcoming === true ? 1 : 0;
+        is_designer = val.upcoming === true ? 1 : 0;
+        is_content_writer = style_type === "NA" ? 1 : 0
+        is_designer = style_type === "NA" ? 1 : 0
+
         const type = 1;
 
 
@@ -913,6 +943,8 @@ const insert_cars_without_items = async (data_res_arr, type, input) => {
             max_power: max_power,
             showroom_price: showroom_price,
             on_road_price: on_road_price,
+            is_content_writer: is_content_writer,
+            is_designer: is_designer
         }
 
         var model_url = val.modelUrl
@@ -932,21 +964,20 @@ const insert_cars_without_items = async (data_res_arr, type, input) => {
                 await vehicle_information.findOneAndUpdate({ $and: [{ brand_id: brand_id }, { model_name: model_name }] }, insert_car, { new: true })
 
             }
-            console.log("car_exist wait vehicle_information.findOneAndUpdate ")
         }
+        let php_vehicle_information_id
         if (!car_exist) {
             // const qr = ("INSERT INTO vehicle_information( category_id, model_name, fuel_type, avg_rating, review_count, variant_name, min_price, max_price, status, launched_at, Launch_date, model_popularity, mileage, engine, style_type, showroom_price, on_road_price, link )") + ' VALUES ' + (`( ${category_id},'${model_name}','${fuel_type}',${avg_rating},${review_count},'${variant_name}','${min_price}','${max_price}','${status}','${launched_at}','${Launch_date}',${model_popularity},${mileage},'${engine}','${style_type}',${showroom_price},${on_road_price},'${link}')`)
 
             // let craete = await con.query(qr)
 
             let response = await vehicle_information.create({ ...insert_car, php_id: php_id })
-            console.log("vehicle_information created!!")
-            console.time("response time")
+            console.log("vehicle_information created!! 3")
             var vehicle_information_id = response._id
-            let php_vehicle_information_id = response.php_id
+            php_vehicle_information_id = response.php_id
         }
         var model_url = val.modelUrl
-        let php_vehicle_information_id = car_exist.php_id
+        php_vehicle_information_id = car_exist?.php_id || 0
         var car_images = await get_vehicle_other_details_latest(model_url, vehicle_information_id, 0, input, php_vehicle_information_id)
 
     }
@@ -1002,7 +1033,7 @@ const get_vehicle_other_details_latest = async (url, vehicle_information_id, var
 
     if ('galleryColorSection' in variant_data_arr) {
         if ('items' in variant_data_arr.galleryColorSection) {
-            await insert_color_img_with_item(variant_data_arr.galleryColorSection.items, vehicle_information_id, variant_id)
+            await insert_color_img_with_item(variant_data_arr.galleryColorSection.items, vehicle_information_id, variant_id, input, php_vehicle_information_id)
 
         }
     }
@@ -1011,16 +1042,16 @@ const get_vehicle_other_details_latest = async (url, vehicle_information_id, var
     if ('galleryColorSection' in variant_data_arr) {
         if ('items' in variant_data_arr.galleryColorSection) {
 
-            await insert_color_img_with_item(variant_data_arr.galleryColorSection.items, vehicle_information_id, variant_id, input)
+            await insert_color_img_with_item(variant_data_arr.galleryColorSection.items, vehicle_information_id, variant_id, input, php_vehicle_information_id)
         }
     }
     if ('gallerySection' in variant_data_arr) {
         var picture_url = variant_data_arr.gallerySection.items[0].url ? variant_data_arr.gallerySection.items[0].url : ""
         if (picture_url != "") {
-            var images = await scrap_vehicle_images(picture_url, vehicle_information_id, input)
+            var images = await scrap_vehicle_images(picture_url, vehicle_information_id, input, php_vehicle_information_id)
         } else {
             var picture_url = url + '/pictures'
-            images = await scrap_vehicle_images(picture_url, vehicle_information_id, input)
+            images = await scrap_vehicle_images(picture_url, vehicle_information_id, input, php_vehicle_information_id)
         }
     }
     //----------------------------Variant table------------------
@@ -1058,7 +1089,7 @@ const get_vehicle_other_details_latest = async (url, vehicle_information_id, var
     }
     await vehicle_information.findOneAndUpdate({ vehicle_information_id: vehicle_information_id }, data, { new: true })
 }
-const insert_color_img_with_item = async (images, vehicle_information_id, variant_id, input) => {
+const insert_color_img_with_item = async (images, vehicle_information_id, variant_id, input, php_vehicle_information_id) => {
     images.map(async (color_img) => {
         if (!color_exist) {
             const color_name = color_img.title ? color_img.title : "NA"
@@ -1077,19 +1108,14 @@ const insert_color_img_with_item = async (images, vehicle_information_id, varian
                 image: image
             }
             var color_exist = await vehicle_model_color.find({ $and: [{ vehicle_information_id: vehicle_information_id }, { color_name: input.color_name }, { image: official_image }] }).count()
-            // const [rows, filed] = await con.query("SELECT * FROM `vehicle_model_color` WHERE `vehicle_information_id`= " + `${vehicle_information_id}` + " AND `color_name` = " + `'${color_name}'` + " AND `image` = " + `'${official_image}'`)
-            // const color_exist = rows[0]
-
-            // const qr = ("INSERT INTO vehicle_model_color ( vehicle_information_id, color_name, color_code, image)") + ' VALUES ' + (`(${vehicle_information_id}, '${color_name}','${color_code}','${image}')`)
-            // let craete = await con.query(qr)
             if (!color_exist) {
-                var color_img = await vehicle_model_color.create(carcolor)
+                var color_img = await vehicle_model_color.create({ ...carcolor, php_vehicle_information_id: php_vehicle_information_id })
             }
         }
     })
 }
 
-const scrap_vehicle_images = async (url, vehicle_information_id, variant_id = 0, input) => {
+const scrap_vehicle_images = async (url, vehicle_information_id, variant_id = 0, input, php_vehicle_information_id) => {
     var url = "https://www.cardekho.com" + url
     var colors_data = await scrap_coman_code(url)
 
@@ -1119,7 +1145,7 @@ const scrap_vehicle_images = async (url, vehicle_information_id, variant_id = 0,
                 if (!color_exist) {
                     // const qr = ("INSERT INTO vehicle_model_color ( vehicle_information_id, color_name, color_code, image)") + ' VALUES ' + (`(${vehicle_information_id}, '${color_name}','${color_code}','${image}')`)
                     // let craete = await con.query(qr)
-                    let color_img = await vehicle_model_color.create(colordata)
+                    let color_img = await vehicle_model_color.create({ ...colordata, php_vehicle_information_id: php_vehicle_information_id })
 
                 }
             }
@@ -1138,3 +1164,20 @@ async function get_brand_id(name) {
 
 
 export default { scrap_cars }
+
+
+
+
+// protected function scrap_coman_code($model_url){
+//     //$model_url = "https://www.cardekho.com/carmodels/Hyundai/Hyundai_i20";
+//     ini_set("max_execution_time",-1);
+//     $client2 = new Client();
+//     $crawler3 = $client2->request('GET', $model_url)->html();
+//     $html = explode('</script>',explode('<script type="application/ld+json">',$crawler3)[1]);
+//     $response = explode('</script>',$html[1]);
+//     $variant_respone = get_string_between($response[0],"<script>window.__INITIAL_STATE__ = "," window.__isWebp =  false;");
+//     $variant_res = substr($variant_respone,0,-1);
+//     $variant_data = substr($variant_res, 0, strpos($variant_res, '; window.__CD_DATA__'));
+//     $variant_data_arr = json_decode($variant_data,true);
+//     return $variant_data_arr;
+// }

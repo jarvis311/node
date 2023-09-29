@@ -8,11 +8,11 @@ import { PriceVariantTable } from "../Model/MySqlModel/priceVariant.js";
 import { VariantkeySpec } from "../Model/MySqlModel/variantKeySpec.js";
 import VariantSpecification from "../Model/VariantSpecification.js";
 import { VariantSpecificationsTable } from "../Model/MySqlModel/variantSpecifications.js";
+import { where } from "sequelize";
 
 
 export const MysqltoMongodbConver = async (req, res) => {
     try {
-        console.log("=============Insiode================== ")
         const postData = await vehicle_information.aggregate([
             { $match: { _id: new mongoose.Types.ObjectId(req.body.vehicleId) } },
             {
@@ -76,16 +76,29 @@ export const MysqltoMongodbConver = async (req, res) => {
         if (mongooseData) {
             try {
                 const findIsExistOrNot = await VehicleInformationTable.findOne({ where: { id: mongooseData.php_id } })
-
                 if (findIsExistOrNot) {
-                    console.log("If findIsExistOrNot")
+                    console.log(mongooseData.php_id)
+                    await VehicleInformationTable.update({
+                        model_name: mongooseData.model_name,
+                        fuel_type: mongooseData.fuel_type,
+                        avg_rating: mongooseData.avg_rating,
+                        variant_name: mongooseData.variant_name,
+                        price_range: mongooseData.price_range,
+                        highlights_desc: mongooseData.highlights_desc,
+                        price_desc: mongooseData.price_desc,
+                        key_specs: mongooseData.key_specs,
+                        manufacturer_desc: mongooseData.manufacturer_desc,
+                        min_price: Number(mongooseData.min_price),
+                        max_price: Number(mongooseData.max_price),
+                    },
+                        { where: { id: mongooseData.php_id } })
                 } else {
-                    console.log("else findIsExistOrNot")
+                    // console.log("else findIsExistOrNot")
                     const createData = await VehicleInformationTable.create({
                         id: mongooseData.php_id,
                         brand_id: mongooseData.brand_id.id,
                         category_id: mongooseData.category_php_id,
-                        bodytype_id: mongooseData.brand_php_id,
+                        bodytype_id: mongooseData.php_bodytype_id,
                         bind_id: mongooseData?.bind_id || 0,
                         model_name: mongooseData.model_name,
                         fuel_type: mongooseData.fuel_type,
@@ -99,7 +112,7 @@ export const MysqltoMongodbConver = async (req, res) => {
                         popular_count: mongooseData?.popular_count || 0,
                         status: mongooseData.status,
                         is_content_writer: mongooseData.is_content_writer,
-                        is_designer: mongooseData.is_designer || 0,
+                        is_designer: mongooseData.is_designer,
                         on_road_price: Number(mongooseData.on_road_price),
                         is_popular_search: mongooseData.is_popular_search,
                         is_upcoming: mongooseData.is_upcoming,
@@ -163,7 +176,6 @@ export const MysqltoMongodbConver = async (req, res) => {
                                 })
                             }
                         }
-
                         if ("keySpec" in mongooseData) {
                             for (const item of mongooseData.keySpec) {
                                 await VariantkeySpec.create({

@@ -45,6 +45,10 @@ var vehicle_informationSchema = new mongoose.Schema({
         type: String,
         default: "NA"
     },
+    is_designer: {
+        type: Number,
+        default: 0
+    },
     launched_at: {
         type: String,
         default: null
@@ -113,6 +117,10 @@ var vehicle_informationSchema = new mongoose.Schema({
         type: String,
         default: "NA"
     },
+    php_bodytype_id: {
+        type: Number,
+        default: 0
+    },
     is_most_search: {
         type: String,
         default: "NA"
@@ -145,9 +153,8 @@ var vehicle_informationSchema = new mongoose.Schema({
         default: 0
     },
     bodytype_id: {
-        // type: Number,
         type: mongoose.Schema.Types.ObjectId,
-        default: 0
+        default: null
     },
     is_content_writer: {
         type: Number,

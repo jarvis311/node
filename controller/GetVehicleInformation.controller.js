@@ -69,8 +69,11 @@ export const getCategory = async (req, res) => {
 
 }
 export const getBrands = async (req, res) => {
+    console.log(req.params.categoryId)
     try {
-        const filterData = await Brands.find()
+        const filterData = await Brands.aggregate([
+            { $match: { category_id: Number(req.params.categoryId) } }
+        ])
         res.json(filterData)
     } catch (error) {
         res.json(error.message)

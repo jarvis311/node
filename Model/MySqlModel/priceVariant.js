@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from '../../connecttion/mysqlconn.js'
 
-export const PriceVariantTable = sequelize.define("vehicle_price_variants", {
+export const PriceVariantTable = sequelize.define("VehiclePriceVariant", {
     vehicle_information_id: {
         type: DataTypes.INTEGER
     },
@@ -80,7 +80,11 @@ export const PriceVariantTable = sequelize.define("vehicle_price_variants", {
     deleted_by: {
         type: DataTypes.INTEGER
     },
-})
+},
+    {
+        tableName: 'vehicle_price_variant'
+    }
+)
 
 // sequelize.sync().then(() => {
 //     console.log('Book table created successfully!');

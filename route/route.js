@@ -26,7 +26,7 @@ router.post("/keyspecification", MysqltoMongodb.keyspecification)
 // GET ROUTE
 router.get("/get-vehicles", getVehicleInformationData)
 router.get("/get-category", getCategory)
-router.get("/get-brand", getBrands)
+router.get("/get-brand/:categoryId", getBrands)
 router.post("/get-filterCategory", filterByCategory)
 router.post("/get-filterBrand", filterByBrand)
 router.post("/mongo-to-mysql/:vehicleId", postDataIntoMysql)
